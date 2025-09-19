@@ -3,12 +3,13 @@
 /*                                                        :::      ::::::::   */
 /*   lexer.c                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: rmei <rmei@student.42berlin.de>            +#+  +:+       +#+        */
+/*   By: ltoscani <ltoscani@student.42berlin.d      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/06/01 14:13:44 by rmei              #+#    #+#             */
-/*   Updated: 2025/06/01 20:45:45 by rmei             ###   ########.fr       */
+/*   Created: 2025/09/15 15:44:21 by ltoscani          #+#    #+#             */
+/*   Updated: 2025/09/15 15:44:37 by ltoscani         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
 
 #include "minishell.h"
 
@@ -79,6 +80,112 @@ static void	ft_skip_whitespace(const char **input)
 		(*input)++;
 }
 
+
+/**
+ * @brief Gets the length of an operator token.
+ * @param str (const char *) The input string.
+ * @return Length of the operator (1 or 2), or 0 if not an operator.
+ */
+static int	ft_get_operator_length(const char *str)
+{
+	if (ft_strncmp(str, "<<", 2) == 0) return 2;
+	if (ft_strncmp(str, ">>", 2) == 0) return 2;
+	if (ft_strncmp(str, "||", 2) == 0) return 2;
+	if (ft_strncmp(str, "&&", 2) == 0) return 2;
+	if (*str == '|' || *str == '<' || *str == '>' || 
+		*str == '(' || *str == ')') return 1;
+	return 0;
+}
+
+/**
+ * @brief Gets the token type for an operator.
+ * @param str (const char *) The operator string.
+ * @param len (int) Length of the operator.
+ * @return The corresponding token type.
+ */
+static t_token_type	ft_get_operator_type(const char *str, int len)
+{
+	if (len == 2)
+	{
+		if (ft_strncmp(str, "<<", 2) == 0) return HEREDOC;
+		if (ft_strncmp(str, ">>", 2) == 0) return APPEND_OUT;
+		if (ft_strncmp(str, "||", 2) == 0) return LOGICAL_OR;
+		if (ft_strncmp(str, "&&", 2) == 0) return LOGICAL_AND;
+	}
+	else if (len == 1)
+	{
+		if (*str == '|') return PIPE;
+		if (*str == '<') return REDIRECT_IN;
+		if (*str == '>') return REDIRECT_OUT;
+		if (*str == '(') return LPARENTHESIS;
+		if (*str == ')') return RPARENTHESIS;
+	}
+	return ERROR;
+}
+
+
+/**
+ * @brief Handles quoted strings.
+ * @param str (const char *) The input string.
+ * @param quote_type (char) The type of quote (' or ").
+ * @return Length of the quoted string including quotes, or -1 if unclosed.
+ */
+static int	ft_handle_quote(const char *str, char quote_type)
+{
+	int len = 1; // Start after the opening quote
+	
+	while (str[len] && str[len] != quote_type)
+		len++;
+	
+	if (str[len] == quote_type)
+		return len + 1; // Include closing quote
+	else
+		return -1; // Unclosed quote
+}
+
+/**
+ * @brief Gets the length of an environment variable.
+ * @param str (const char *) The input string starting with $.
+ * @return Length of the environment variable token.
+ */
+static int	ft_get_env_var_length(const char *str)
+{
+	int len = 1; // Start after the '$'
+	
+	if (str[1] == '?') // Handle $?
+		return 2;
+	
+	if (ft_isalpha(str[1]) || str[1] == '_')
+	{
+		len++;
+		while (ft_isalnum(str[len]) || str[len] == '_')
+			len++;
+	}
+	return len;
+}
+
+/**
+ * @brief Checks if a character is a quote.
+ * @param c (char) The character to check.
+ * @return 1 if quote, 0 otherwise.
+ */
+static int	ft_isquote(char c)
+{
+	return (c == '\'' || c == '"');
+}
+
+/**
+ * @brief Checks if a character is a special token character.
+ * @param c (char) The character to check.
+ * @return 1 if special, 0 otherwise.
+ */
+static int	ft_is_special_char(char c)
+{
+	return (c == '|' || c == '<' || c == '>' || 
+			c == '(' || c == ')' || c == '$' || 
+			ft_isquote(c) || ft_isspace(c));
+}
+
 /**
  * @brief Frees the content of a token.
  */
@@ -103,29 +210,73 @@ t_list	*ft_tokenize(const char *input_line)
 {
 	const char	*current_char;
 	t_list		*tokens;
-	size_t		len;
+	int			len;
+	t_token_type	type;
 
 	if (!input_line)
 		return (NULL);
 	tokens = NULL;
 	current_char = input_line;
-	printf("Tokenizer: Initializing (input: '%s')\n", input_line);
 
 	while (*current_char)
 	{
 		ft_skip_whitespace(&current_char);
 		if (!*current_char)
 			break;
-		len = 0;
-		// This is where operator/quote handlers would go first
-		// For now, default to TOKEN_WORD if no other handler matches
-		while (current_char[len] && !ft_isspace(current_char[len])) 
+
+		// Check for operators first
+		len = ft_get_operator_length(current_char);
+		if (len > 0)
 		{
-			// TODO: Add checks for operators, quotes etc. to break this word token earlier
-			len++;
+			type = ft_get_operator_type(current_char, len);
+			if (!ft_append_token(&tokens, type, current_char, len))
+			{
+				ft_lstclear(&tokens, ft_free_token);
+				return (NULL);
+			}
+			current_char += len;
+			continue;
 		}
 
-		if (len > 0) // Found a word
+		// Check for quotes
+		if (ft_isquote(*current_char))
+		{
+			len = ft_handle_quote(current_char, *current_char);
+			if (len < 0)
+			{
+				ft_putstr_fd("minishell: syntax error: unclosed quote\n", STDERR_FILENO);
+				ft_lstclear(&tokens, ft_free_token);
+				return (NULL);
+			}
+			type = (*current_char == '\'') ? SINGLE_QUOTE : DOUBLE_QUOTE;
+			if (!ft_append_token(&tokens, type, current_char, len))
+			{
+				ft_lstclear(&tokens, ft_free_token);
+				return (NULL);
+			}
+			current_char += len;
+			continue;
+		}
+
+		// Check for environment variables
+		if (*current_char == '$')
+		{
+			len = ft_get_env_var_length(current_char);
+			if (!ft_append_token(&tokens, ENV_VAR, current_char, len))
+			{
+				ft_lstclear(&tokens, ft_free_token);
+				return (NULL);
+			}
+			current_char += len;
+			continue;
+		}
+
+		// Handle regular words
+		len = 0;
+		while (current_char[len] && !ft_is_special_char(current_char[len]))
+			len++;
+
+		if (len > 0)
 		{
 			if (!ft_append_token(&tokens, WORD, current_char, len))
 			{
@@ -133,9 +284,8 @@ t_list	*ft_tokenize(const char *input_line)
 				return (NULL);
 			}
 			current_char += len;
+			continue;
 		}
-		// If len is 0 here, it means ft_isspace was true or end of string, handled by loop condition or ft_skip_whitespace.
-		// Or, it could be an unhandled special character if we had other handlers.
 	}
 
 	if (!ft_append_token(&tokens, END_OF_FILE, NULL, 0))
@@ -143,5 +293,6 @@ t_list	*ft_tokenize(const char *input_line)
 		ft_lstclear(&tokens, ft_free_token);
 		return (NULL);
 	}
+	
 	return (tokens);
-} 
+}
