@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: ltoscani <ltoscani@student.42berlin.d      +#+  +:+       +#+         #
+#    By: asalniko <asalniko@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/09/19 15:12:00 by ltoscani          #+#    #+#              #
-#    Updated: 2025/09/19 15:12:04 by ltoscani         ###   ########.fr        #
+#    Updated: 2025/10/10 00:58:27 by asalniko         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -21,7 +21,24 @@ OBJ_DIR = obj
 DIRS = $(sort $(dir $(OBJS)))
 LIBFT_DIR = lib/libft
 
-SRCS = lexer main signals commands/pwd commands/echo commands/exit
+SRCS = \
+	lexer/lexer \
+	lexer/lexer_helpers1 \
+	lexer/lexer_helpers2 \
+	lexer/lexer_helpers3 \
+	parser/parser_commands \
+	parser/parser_helpers \
+	parser/parser_pipeline \
+	parser/parser_redirect \
+	parser/parser_command_helper \
+	parser/parser_command_helper2 \
+	expansion \
+	free \
+	main \
+	signals \
+	commands/pwd \
+	commands/echo \
+	commands/exit
 SRCS := $(addsuffix .c, $(addprefix $(SRC_DIR)/, ${SRCS}))
 OBJS = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRCS))
 

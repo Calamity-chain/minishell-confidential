@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ltoscani <ltoscani@student.42berlin.d      +#+  +:+       +#+        */
+/*   By: asalniko <asalniko@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/15 15:45:37 by ltoscani          #+#    #+#             */
-/*   Updated: 2025/09/15 15:45:53 by ltoscani         ###   ########.fr       */
+/*   Updated: 2025/10/10 01:21:37 by asalniko         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,10 +32,8 @@ static void	ft_print_tokens(t_list *tokens)
 	t_token		*token;
 	int			i;
 	const char	*type_names[] = {
-		"WORD", "PIPE", "REDIRECT_IN", "REDIRECT_OUT", "HEREDOC", "APPEND_OUT",
-		"SINGLE_QUOTE", "DOUBLE_QUOTE", "STRING_LITERAL", "ENV_VAR", 
-		"LOGICAL_AND", "LOGICAL_OR", "LPARENTHESIS", "RPARENTHESIS", 
-		"WILDCARD", "WHITESPACE", "END_OF_FILE", "ERROR"
+		"WORD", "STRING_LITERAL", "ENV_VAR", "PIPE", "REDIRECT_IN", "REDIRECT_OUT", "HEREDOC", "APPEND_OUT", 
+		"LPARENTHESIS", "RPARENTHESIS", "END_OF_FILE", "SPACE", "ERROR"
 	};
 
 	current = tokens;
