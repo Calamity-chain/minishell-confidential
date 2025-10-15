@@ -59,6 +59,8 @@ void	free_command(t_command *cmd)
 		return ;
 	if (cmd->args)
 		ft_free_matrix(cmd->args);
+	if (cmd->arg_quoted)  // Free the new field
+		free(cmd->arg_quoted);
 	free(cmd->input_file);
 	free(cmd->output_file);
 	free(cmd->heredoc_delim);

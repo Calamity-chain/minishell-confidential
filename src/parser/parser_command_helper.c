@@ -18,6 +18,77 @@
 #include "../../include/parser.h"
 #include "../../include/minishell.h"
 
+int	quotedlist_push_back(t_quotedlist **head, int quoted)
+{
+	t_quotedlist	*new_node;
+	t_quotedlist	*cursor;
+
+	new_node = (t_quotedlist *)malloc(sizeof(t_quotedlist));
+	if (!new_node)
+		return (-1);
+	new_node->quoted = quoted;
+	new_node->next = NULL;
+	
+	if (!*head)
+	{
+		*head = new_node;
+		return (0);
+	}
+	
+	cursor = *head;
+	while (cursor->next)
+		cursor = cursor->next;
+	cursor->next = new_node;
+	return (0);
+}
+
+void	quotedlist_clear(t_quotedlist **head)
+{
+	t_quotedlist	*node;
+	t_quotedlist	*next;
+
+	node = *head;
+	while (node)
+	{
+		next = node->next;
+		free(node);
+		node = next;
+	}
+	*head = NULL;
+}
+
+int	*quotedlist_to_array(t_quotedlist *head)
+{
+	size_t			count;
+	size_t			i;
+	int				*array;
+	t_quotedlist	*temp;
+
+	count = 0;
+	temp = head;
+	while (temp)
+	{
+		count++;
+		temp = temp->next;
+	}
+	
+	array = (int *)malloc(sizeof(int) * (count + 1));
+	if (!array)
+		return (NULL);
+	
+	i = 0;
+	temp = head;
+	while (i < count)
+	{
+		array[i] = temp->quoted;
+		temp = temp->next;
+		i++;
+	}
+	array[count] = -1; // Sentinel value
+	
+	return (array);
+}
+
 int	is_arg_token(t_token_type type)
 {
 	return (type == WORD || type == STRING_LITERAL || type == ENV_VAR);

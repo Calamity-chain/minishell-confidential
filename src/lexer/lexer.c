@@ -31,6 +31,10 @@ t_token	*ft_make_token(t_token_type type, const char *value, size_t len)
 	token->type = type;
 	token->len = len;
 	token->value = NULL;
+	token->next = NULL;  // Initialize next pointer -> FIX TOKEN LINKING
+	token->prev = NULL;  // Initialize prev pointer -> FIX TOKEN LINKING
+	token->quoted = Q_NONE;  // Initialize quoted state -> FIX TOKEN LINKING
+	
 	if (value && len >= 0)
 	{
 		token->value = ft_substr(value, 0, len);
@@ -55,6 +59,8 @@ int	ft_append_token(t_list **head, t_token_type type, const char *value, size_t 
 {
 	t_token	*new_token;
 	t_list	*new_node;
+	t_list	*last;
+	t_token	*last_token;
 
 	new_token = ft_make_token(type, value, len);
 	if (!new_token)
@@ -65,6 +71,14 @@ int	ft_append_token(t_list **head, t_token_type type, const char *value, size_t 
 		free(new_token->value);
 		free(new_token);
 		return (0);
+	}
+	// Link the tokens together via the next/prev pointers
+	if (*head)
+	{
+		last = ft_lstlast(*head);
+		last_token = (t_token *)last->content;
+		last_token->next = new_token;  // Link previous token to new token
+		new_token->prev = last_token;  // Link new token back to previous
 	}
 	ft_lstadd_back(head, new_node);
 	return (1);

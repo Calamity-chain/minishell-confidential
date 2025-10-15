@@ -11,7 +11,6 @@
 /* ************************************************************************** */
 
 #include "../../include/minishell.h"
-#include <limits.h> // for LONG_MAX/MIN
 
 /**
  * @brief Validate if a string is a numeric argument
@@ -19,19 +18,22 @@
 static int	is_numeric(const char *str)
 {
 	int	i;
+	int	has_digits;
 
-	i = 0;
 	if (!str || !*str)
 		return (0);
+	i = 0;
 	if (str[0] == '-' || str[0] == '+')
 		i++;
+	has_digits = 0;
 	while (str[i])
 	{
 		if (!ft_isdigit(str[i]))
 			return (0);
+		has_digits = 1;
 		i++;
 	}
-	return (1);
+	return (has_digits);
 }
 
 /**
@@ -43,7 +45,6 @@ int	ft_exit(char **args)
 {
 	int	exit_code;
 
-	printf("exit\n");
 	if (!args[1])
 		exit(0);
 	if (!is_numeric(args[1]))
@@ -56,7 +57,12 @@ int	ft_exit(char **args)
 		ft_putstr_fd("minishell: exit: too many arguments\n", STDERR_FILENO);
 		return (1); // Don't exit
 	}
-	exit_code = ft_atoi(args[1]);
+	
+	// Simple atoi with modulo 256 to match bash behavior
+	exit_code = ft_atoi(args[1]) % 256;
+	// Handle negative modulo to get positive result
+	if (exit_code < 0)
+		exit_code += 256;
+	
 	exit(exit_code);
 }
-

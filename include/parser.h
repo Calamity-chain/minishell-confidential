@@ -20,6 +20,7 @@
 
 typedef struct s_command {
     char    **args;           // argv, args[0] is command name
+    int     *arg_quoted;      // Array of quote flags for each argument
     char    *input_file;      // Input redirection file <
     char    *output_file;     // Output redirection file >
     int     append_mode;      // For >> redirection
@@ -35,10 +36,22 @@ typedef struct s_arglist
     struct s_arglist *next;
 }   t_arglist;
 
+
+typedef struct s_quotedlist 
+{
+    int					quoted;
+    struct s_quotedlist	*next;
+}   t_quotedlist;
+
 // main parsing functions //
 t_command	*parse_pipeline(t_token *tok_head);
 t_command	*parse_command(t_token **current);
 int		parse_redirection(t_token **current, t_command *cmd);
+
+// quote list management //
+int		quotedlist_push_back(t_quotedlist **head, int quoted);
+void	quotedlist_clear(t_quotedlist **head);
+int		*quotedlist_to_array(t_quotedlist *head);
 
 // helpers //
 int			is_redirection(t_token_type type);

@@ -32,13 +32,21 @@ SRCS = \
 	parser/parser_redirect \
 	parser/parser_command_helper \
 	parser/parser_command_helper2 \
+	executor/executor \
+    	executor/executor_helpers \
+    	executor/redirections \
+    	executor/pipes \
 	expansion \
 	free \
 	main \
 	signals \
 	commands/pwd \
 	commands/echo \
-	commands/exit
+	commands/exit \
+	commands/cd \
+    	commands/export \
+    	commands/unset \
+    	commands/env
 SRCS := $(addsuffix .c, $(addprefix $(SRC_DIR)/, ${SRCS}))
 OBJS = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRCS))
 

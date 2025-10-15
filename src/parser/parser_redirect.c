@@ -22,7 +22,7 @@ static int	assign_target(char **dst, const char *src)
 {
 	char	*dup;
 
-	dup = strdup(src);
+	dup = ft_strdup(src); // CHANGED strdup to ft_strdup
 	if (!dup)
 		return (-1);
 	free(*dst);

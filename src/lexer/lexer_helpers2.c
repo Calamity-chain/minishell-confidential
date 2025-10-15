@@ -103,12 +103,18 @@ int	emit_quoted(const char **cur, t_list **tokens)
 	if (len < 0)
 		return (ft_putstr_fd("minishell: syntax error: unclosed quote\n",
 				STDERR_FILENO), -1);
-	inner = *cur + 1;
-	inner_len = len - 2;
+	
+	// For both single and double quotes, strip the quotes
+	// But we'll mark them as quoted so expansion knows the context
+	inner = *cur + 1;  // Skip opening quote
+	inner_len = len - 2;  // Remove both quotes
+	
 	if (inner_len < 0)
 		inner_len = 0;
+	
 	if (!ft_append_token(tokens, STRING_LITERAL, (char *)inner, inner_len))
 		return (-1);
+	
 	if (!set_last_quoted(*tokens, q))
 		return (-1);
 	*cur += len;
