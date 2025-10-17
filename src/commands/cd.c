@@ -106,7 +106,19 @@ int	ft_cd(char **args, t_data *data)
 	char	*path;
 	char	cwd[1024];
 	char	old_cwd[1024];
+	int		arg_count = 0;
 
+	// Count arguments after expansion
+	while (args[arg_count])
+		arg_count++;
+	
+	// Check for too many arguments - be strict like bash
+	if (arg_count > 2)
+	{
+		ft_putstr_fd("minishell: cd: too many arguments\n", STDERR_FILENO);
+		return (1);
+	}
+	
 	// Get current directory BEFORE changing
 	if (!getcwd(old_cwd, sizeof(old_cwd)))
 		return (perror("cd"), 1);
@@ -125,14 +137,17 @@ int	ft_cd(char **args, t_data *data)
 		printf("%s\n", path);
 	}
 	else
+	{
 		path = args[1];
+	}
 
 	if (chdir(path) != 0)
 	{
-    		ft_putstr_fd("minishell: cd: ", STDERR_FILENO);
-    		perror(path);  // This will print "path: Error message"
-    		return (1);
+		ft_putstr_fd("minishell: cd: ", STDERR_FILENO);
+		perror(path);
+		return (1);
 	}
+
 	// Update OLDPWD with the OLD directory (before cd)
 	if (update_env_variable(data, "OLDPWD", old_cwd) != 0)
 		return (1);

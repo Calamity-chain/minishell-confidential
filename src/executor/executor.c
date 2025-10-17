@@ -91,23 +91,64 @@ static void	execute_external(t_command *cmd, t_data *data)
 {
 	char	*cmd_path;
 
+	// REMOVE the $ handling - let the normal command execution handle it
 	cmd_path = find_command_path(cmd->args[0], data->env);
 	if (!cmd_path)
 	{
 		command_not_found_error(cmd->args[0]);
-		exit(127); // Exit instead of return for child processes
+		exit(127);
+	}
+	
+	// Check if we have execute permission
+	if (access(cmd_path, X_OK) == -1)
+	{
+		ft_putstr_fd("minishell: ", STDERR_FILENO);
+		ft_putstr_fd(cmd->args[0], STDERR_FILENO);
+		ft_putstr_fd(": Permission denied\n", STDERR_FILENO);
+		free(cmd_path);
+		exit(126);
 	}
 	
 	if (execve(cmd_path, cmd->args, data->env) == -1)
 	{
 		perror(cmd->args[0]);
 		free(cmd_path);
-		exit(126); // Exit instead of return
+		exit(126);
 	}
 	
 	// Should not reach here
 	free(cmd_path);
 	exit(1);
+}
+
+/**
+ * @brief Remove only the outer delimiting quotes from a string
+ */
+static char	*remove_outer_quotes(char *str)
+{
+	char	*result;
+	size_t	len;
+	char	first_char;
+
+	if (!str || ft_strlen(str) < 2)
+		return (ft_strdup(str));
+	
+	first_char = str[0];
+	len = ft_strlen(str);
+	
+	// Only remove if the first and last characters are matching quotes
+	if ((first_char == '\'' || first_char == '"') && str[len - 1] == first_char)
+	{
+		// Remove both outer quotes
+		result = ft_substr(str, 1, len - 2);
+		free(str);
+	}
+	else
+	{
+		result = str;
+	}
+	
+	return (result);
 }
 
 void	expand_command_args(t_command *cmd, t_data *data)
@@ -124,17 +165,15 @@ void	expand_command_args(t_command *cmd, t_data *data)
 	{
 		arg = cmd->args[i];
 		
-		// Use the actual quote information from parsing
-		if (cmd->arg_quoted[i] != Q_SQUOTE) // Only expand if not single-quoted
+		// Handle environment variable expansion FIRST (respecting quotes)
+		if (cmd->arg_quoted[i] != Q_SQUOTE)
 		{
-			if (ft_strchr(arg, '$') || ft_strchr(arg, '\'') || ft_strchr(arg, '"'))
+			expanded = expand_env_variable_in_string(data, arg);
+			if (expanded)
 			{
-				expanded = expand_env_variable_in_string(data, arg);
-				if (expanded)
-				{
-					free(cmd->args[i]);
-					cmd->args[i] = expanded;
-				}
+				free(cmd->args[i]);
+				cmd->args[i] = expanded;
+				arg = expanded;
 			}
 		}
 		
@@ -147,40 +186,14 @@ void	expand_command_args(t_command *cmd, t_data *data)
 			{
 				free(cmd->args[i]);
 				cmd->args[i] = expanded;
+				arg = expanded;
 			}
 		}
+		
+		// Remove outer quotes LAST
+		cmd->args[i] = remove_outer_quotes(arg);
 		i++;
 	}
-}
-
-static int	setup_redirections_with_data(t_command *cmd, t_data *data)
-{
-	int	fd;
-
-	if (cmd->input_file)
-	{
-		fd = open(cmd->input_file, O_RDONLY);
-		if (fd == -1)
-			return (perror(cmd->input_file), -1);
-		if (dup2(fd, STDIN_FILENO) == -1)
-			return (close(fd), perror("dup2"), -1);
-		close(fd);
-	}
-	if (cmd->heredoc_delim)
-	{
-		if (handle_heredoc(cmd->heredoc_delim, cmd->heredoc_quoted, data) != 0)
-			return (-1);
-	}
-	if (cmd->output_file)
-	{
-		fd = open(cmd->output_file, O_WRONLY | O_CREAT | (cmd->append_mode ? O_APPEND : O_TRUNC), 0644);
-		if (fd == -1)
-			return (perror(cmd->output_file), -1);
-		if (dup2(fd, STDOUT_FILENO) == -1)
-			return (close(fd), perror("dup2"), -1);
-		close(fd);
-	}
-	return (0);
 }
 
 int	execute_command(t_command *cmd, t_data *data)
@@ -202,10 +215,12 @@ int	execute_command(t_command *cmd, t_data *data)
 	if (original_stdin == -1 || original_stdout == -1)
 		return (perror("dup"), 1);
 	
+	// Use the setup_redirections_with_data from redirections.c
 	if (setup_redirections_with_data(cmd, data) != 0)
 	{
 		restore_fds(original_stdin, original_stdout);
-		return (1);
+		data->exit_status = 1; 
+		return (1);  // Return error code 1 for redirection failures
 	}
 	
 	// Handle builtin commands (no fork needed)

@@ -18,25 +18,26 @@
 #include "../../include/parser.h"
 #include "../../include/minishell.h"
 
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   parser_commands.c                                  :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: asalniko <asalniko@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/10/03 18:11:55 by asalniko          #+#    #+#             */
-/*   Updated: 2025/10/10 00:18:55 by asalniko         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
-#include <stdio.h>
-#include "../../include/lexer.h"
-#include "../../include/parser.h"
-#include "../../include/minishell.h"
+static void	free_redirection_if_exists(t_command *cmd, t_token_type type)
+{
+	if (type == REDIRECT_IN && cmd->input_file)
+	{
+		free(cmd->input_file);
+		cmd->input_file = NULL;
+	}
+	else if ((type == REDIRECT_OUT || type == APPEND_OUT) && cmd->output_file)
+	{
+		free(cmd->output_file);
+		cmd->output_file = NULL;
+		cmd->append_mode = 0;
+	}
+	else if (type == HEREDOC && cmd->heredoc_delim)
+	{
+		free(cmd->heredoc_delim);
+		cmd->heredoc_delim = NULL;
+		cmd->heredoc_quoted = 0;
+	}
+}
 
 t_command	*parse_command(t_token **current)
 {
@@ -65,8 +66,12 @@ t_command	*parse_command(t_token **current)
 	token = *current;
 	skip_spaces(&token);
 	
+	// Parse initial redirections
 	while (token && token->type != END_OF_FILE && is_redirection(token->type))
 	{
+		// Free previous redirection of same type if it exists
+		free_redirection_if_exists(cmd, token->type);
+		
 		if (parse_redirection(&token, cmd) != 0)
 		{
 			arglist_clear(&arglist, 1);
@@ -77,6 +82,7 @@ t_command	*parse_command(t_token **current)
 		skip_spaces(&token);
 	}
 	
+	// Parse command arguments and mixed redirections
 	while (token && token->type != END_OF_FILE && !is_pipe(token->type))
 	{
 		if (token->type == SPACES)
@@ -86,6 +92,9 @@ t_command	*parse_command(t_token **current)
 		}
 		if (is_redirection(token->type))
 		{
+			// Free previous redirection of same type if it exists
+			free_redirection_if_exists(cmd, token->type);
+			
 			if (parse_redirection(&token, cmd) != 0)
 			{
 				arglist_clear(&arglist, 1);

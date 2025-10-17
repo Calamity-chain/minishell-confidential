@@ -97,5 +97,6 @@ int		setup_pipe_redirections(t_command *cmd, t_command *pipeline, t_pipe_state *
 void	cleanup_pipe_redirections(t_command *cmd, t_pipe_state *state);
 void	setup_child_signals(void);
 char	*expand_heredoc_line(char *line, t_data *data);
+int		setup_redirections_with_data(t_command *cmd, t_data *data);
 
 #endif 
