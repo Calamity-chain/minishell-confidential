@@ -10,10 +10,6 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
-#include <stdio.h>
 #include "../../include/lexer.h"
 #include "../../include/parser.h"
 #include "../../include/minishell.h"
@@ -67,6 +63,51 @@ static void	print_syntax_error(const char *token)
 		token = "newline";
 	printf("syntax error near unexp. token `%s`\n", token);
 }
+/**
+ * @brief Concatenate adjacent string tokens for redirection filenames
+ */
+static char	*concatenate_adjacent_tokens(t_token **token)
+{
+	char	*result;
+	char	*temp;
+	t_token	*current;
+
+	if (!token || !*token)
+		return (NULL);
+	
+	current = *token;
+	result = ft_strdup("");
+	if (!result)
+		return (NULL);
+	
+	// Concatenate all adjacent WORD, STRING_LITERAL, and ENV_VAR tokens
+	while (current && (current->type == WORD || current->type == STRING_LITERAL || current->type == ENV_VAR))
+	{
+		// Process each token (remove quotes if needed)
+		char *processed = process_redirection_filename(current->value);
+		if (!processed)
+		{
+			free(result);
+			return (NULL);
+		}
+		
+		// Concatenate with previous result
+		temp = ft_strjoin(result, processed);
+		free(result);
+		free(processed);
+		
+		if (!temp)
+			return (NULL);
+		
+		result = temp;
+		current = current->next;
+	}
+	
+	// Update the token pointer to point to the next non-filename token
+	*token = current;
+	
+	return (result);
+}
 
 int	parse_redirection(t_token **current, t_command *cmd)
 {
@@ -97,21 +138,40 @@ int	parse_redirection(t_token **current, t_command *cmd)
 		print_syntax_error(bad);
 		return (-1);
 	}
+
+	// NEW: Concatenate adjacent string tokens for the filename
+	char *full_filename = concatenate_adjacent_tokens(&token);
+	
+	if (!full_filename)
+		return (-1);
+
 	if (redir_type == REDIRECT_IN 
-		&& assign_target(&cmd->input_file, token->value) < 0)
+		&& assign_target(&cmd->input_file, full_filename) < 0)
+	{
+		free(full_filename);
 		return (-1);
+	}
 	if ((redir_type == REDIRECT_OUT || redir_type == APPEND_OUT) 
-		&& assign_target(&cmd->output_file, token->value) < 0)
+		&& assign_target(&cmd->output_file, full_filename) < 0)
+	{
+		free(full_filename);
 		return (-1);
+	}
 	if (redir_type == HEREDOC 
-		&& assign_target(&cmd->heredoc_delim, token->value) < 0)
+		&& assign_target(&cmd->heredoc_delim, full_filename) < 0)
+	{
+		free(full_filename);
 		return (-1);
+	}
+	
+	free(full_filename);
+	
 	if (redir_type == APPEND_OUT)
 		cmd->append_mode = 1;
 	else if (redir_type == REDIRECT_OUT)
 		cmd->append_mode = 0;
 	if (redir_type == HEREDOC)
 		cmd->heredoc_quoted = (token->type == STRING_LITERAL);
-	*current = token->next;
+	*current = token;
 	return (0);
 }

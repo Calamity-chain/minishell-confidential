@@ -97,3 +97,5 @@ fclean:
 	@rm -f $(NAME)
 
 re: fclean all
+
+.PHONY: all libft end clean fclean re bonus

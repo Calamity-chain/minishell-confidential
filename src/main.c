@@ -12,7 +12,7 @@
 
 #include "minishell.h"
 
-volatile sig_atomic_t g_signal_received = 0;  // ADDED THIS LINE
+volatile sig_atomic_t g_signal_received = 0;
 
 static char	**copy_envp(char **envp)
 {
@@ -55,12 +55,12 @@ static void	process_input(char *line, t_data *data)
 	if (!line || !*line)
 		return ;
 	
-	// TEMPORARY: Skip commands that might hang
-	if (strcmp(line, "$PWD") == 0 || strcmp(line, "$EMPTY") == 0)
+	/*// TEMPORARY: Skip commands that might hang
+	if (ft_strncmp(line, "$PWD", 5) == 0 || ft_strncmp(line, "$EMPTY", 7) == 0)
 	{
 		printf("minishell: skipping potentially hanging command\n");
 		return;
-	}
+	}*/
 	
 	add_history(line);
 	tokens = ft_tokenize(line);
@@ -75,7 +75,6 @@ static void	process_input(char *line, t_data *data)
 	ft_lstclear(&tokens, ft_free_token);
 }
 
-// added emergency timeout:
 int	main(int argc, char **argv, char **envp)
 {
 	char	*line;

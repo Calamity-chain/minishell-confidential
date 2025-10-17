@@ -40,7 +40,7 @@ int	handle_output_redirection(char *filename, int append_mode)
 {
 	int	fd;
 	int	flags;
-
+	
 	if (!filename)
 		return (-1);
 	flags = O_WRONLY | O_CREAT;
@@ -51,9 +51,9 @@ int	handle_output_redirection(char *filename, int append_mode)
 	fd = open(filename, flags, 0644);
 	if (fd == -1)
 	{
-		// Use perror instead of errno - it's in the allowed list
 		ft_putstr_fd("minishell: ", STDERR_FILENO);
-		perror(filename);
+		ft_putstr_fd(filename, STDERR_FILENO);
+		ft_putstr_fd(": Permission denied\n", STDERR_FILENO);
 		return (-1);
 	}
 	if (dup2(fd, STDOUT_FILENO) == -1)
@@ -113,35 +113,34 @@ int	handle_heredoc(char *delimiter, int quoted, t_data *data)
 
 int	setup_redirections_with_data(t_command *cmd, t_data *data)
 {
-	int	result = 0;
 	int	heredoc_result = 0;
 	int	input_result = 0;
 	int	output_result = 0;
 
-	// Handle heredoc (takes precedence over input file)
+	// Handle heredoc
 	if (cmd->heredoc_delim)
 	{
 		heredoc_result = handle_heredoc(cmd->heredoc_delim, cmd->heredoc_quoted, data);
 		if (heredoc_result != 0)
-			result = 1;
+			return (1);  // Return immediately on error
 	}
-	// Handle input file only if no heredoc or heredoc failed
+	// Handle input file
 	else if (cmd->input_file)
 	{
 		input_result = handle_input_redirection(cmd->input_file);
 		if (input_result != 0)
-			result = 1;
+			return (1);  // Return immediately on error
 	}
 	
-	// Handle output file (last one wins)
+	// Handle output file
 	if (cmd->output_file)
 	{
 		output_result = handle_output_redirection(cmd->output_file, cmd->append_mode);
 		if (output_result != 0)
-			result = 1;
+			return (1);  // Return immediately on error
 	}
 	
-	return (result);
+	return (0);
 }
 
 void	restore_fds(int stdin_fd, int stdout_fd)

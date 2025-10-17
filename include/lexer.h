@@ -14,7 +14,7 @@
 # define LEXER_H
 
 # include <stddef.h>
-#include "../lib/libft/include/libft.h"
+# include "libft.h"
 
 typedef enum e_quoted {
 	Q_NONE = 0,

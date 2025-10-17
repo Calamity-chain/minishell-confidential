@@ -12,8 +12,6 @@
 
 #include "../include/minishell.h"
 
-//volatile sig_atomic_t g_signal_received = 0;
-
 /*
  * handle_sigint (Ctrl-C) - for interactive prompt
  */

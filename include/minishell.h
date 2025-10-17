@@ -18,9 +18,9 @@
 
 // Standard Libraries
 # include <stdio.h>      // printf, perror
+# include <string.h>     // strerror
 # include <stdlib.h>     // malloc, free, exit, getenv
 # include <unistd.h>     // access, fork, pipe, execve, dup, dup2, close, getcwd, chdir, unlink
-# include <string.h>     // strerror
 # include <sys/wait.h>   // wait, waitpid, wait3, wait4
 # include <sys/stat.h>   // stat, lstat, fstat
 # include <fcntl.h>      // open, read, write
@@ -34,9 +34,9 @@
 # include <readline/history.h>
 
 // Project-specific includes
-# include "../lib/libft/include/libft.h"
-# include "../include/lexer.h"
-# include "../include/parser.h"
+# include "libft.h"
+# include "lexer.h"
+# include "parser.h"
 
 // ONLY ONE GLOBAL VARIABLE - as per project requirements
 extern volatile sig_atomic_t    g_signal_received;

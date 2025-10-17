@@ -108,11 +108,23 @@ int	ft_cd(char **args, t_data *data)
 	char	old_cwd[1024];
 	int		arg_count = 0;
 
-	// Count arguments after expansion
+	// Count arguments
 	while (args[arg_count])
 		arg_count++;
 	
-	// Check for too many arguments - be strict like bash
+	// BASH COMPATIBILITY: Only treat as "too many arguments" for likely env var expansions
+	if (arg_count == 2)
+	{
+		// Check if this looks like an expanded environment variable
+		// (absolute path starting with /, or contains special chars)
+		if (args[1] && (args[1][0] == '/' || ft_strchr(args[1], '$') || ft_strchr(args[1], '~')))
+		{
+			ft_putstr_fd("minishell: cd: too many arguments\n", STDERR_FILENO);
+			return (1);
+		}
+	}
+	
+	// Normal argument validation
 	if (arg_count > 2)
 	{
 		ft_putstr_fd("minishell: cd: too many arguments\n", STDERR_FILENO);

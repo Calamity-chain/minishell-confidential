@@ -83,9 +83,11 @@ static char	*expand_with_quotes(t_data *data, const char *str, int in_single_quo
 				free(expanded_var);
 				result = temp;
 				if (!result)
-					return (NULL);
+				{
+					free(result);
+					return (ft_strdup(""));  // Ensure cleanup
+				}
 			}
-			
 			current = var_end;
 		}
 		else

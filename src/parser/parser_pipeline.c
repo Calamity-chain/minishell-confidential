@@ -10,10 +10,6 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
-#include <stdio.h>
 #include "../../include/lexer.h"
 #include "../../include/parser.h"
 #include "../../include/minishell.h"

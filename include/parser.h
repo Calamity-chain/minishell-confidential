@@ -10,13 +10,12 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-
 #ifndef PARSER_H
 # define PARSER_H
 
 # include <stddef.h>
 # include "lexer.h" // t_token, t_token_type, ft_tokenize
-#include "../lib/libft/include/libft.h"
+# include "libft.h"
 
 typedef struct s_command {
     char    **args;           // argv, args[0] is command name
@@ -27,6 +26,7 @@ typedef struct s_command {
     char    *heredoc_delim;    // << delimiter
     int     heredoc_quoted;    // 0/1: is there delimiter in quotes
     int     pipe_output;       // 0/1: if there is | on the right
+    int     from_env_var;      // 1 if command name came from env var expansion
     struct s_command *next;   // For pipelines
 } t_command;
 

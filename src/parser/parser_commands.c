@@ -10,10 +10,6 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
-#include <stdio.h>
 #include "../../include/lexer.h"
 #include "../../include/parser.h"
 #include "../../include/minishell.h"
@@ -58,6 +54,7 @@ t_command	*parse_command(t_token **current)
 	cmd->heredoc_delim = NULL;
 	cmd->heredoc_quoted = 0;
 	cmd->pipe_output = 0;
+	cmd->from_env_var = 0;  // NEW: Initialize to 0
 	cmd->next = NULL;
 	
 	arglist = NULL;
@@ -65,7 +62,7 @@ t_command	*parse_command(t_token **current)
 	
 	token = *current;
 	skip_spaces(&token);
-	
+
 	// Parse initial redirections
 	while (token && token->type != END_OF_FILE && is_redirection(token->type))
 	{
@@ -160,6 +157,10 @@ t_command	*parse_command(t_token **current)
 	}
 	
 	cmd->args = arglist_to_argv(arglist);
+	// extra CLEANUP:
+	if (!cmd->args && arglist) {
+    	arglist_clear(&arglist, 1);  // Free strings since they won't be used
+	}
 	
 	if (arglist)
 		cmd->arg_quoted = quotedlist_to_array(quotedlist);

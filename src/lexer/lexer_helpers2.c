@@ -107,7 +107,8 @@ int	emit_quoted(const char **cur, t_list **tokens)
 	inner = *cur;  // Start from the opening quote (INCLUDING it)
 	// Use the full length including both quotes
 	
-	if (!ft_append_token(tokens, STRING_LITERAL, (char *)inner, len))
+	//if (!ft_append_token(tokens, STRING_LITERAL, (char *)inner, len)) //to include the quotes in the token value
+	if (!ft_append_token(tokens, STRING_LITERAL, (char *)inner + 1, len - 2))
 		return (-1);
 	
 	if (!set_last_quoted(*tokens, q))
