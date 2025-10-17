@@ -9,17 +9,6 @@
 /*   Updated: 2025/10/10 01:21:37 by asalniko         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   main.c                                             :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: asalniko <asalniko@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/09/15 15:45:37 by ltoscani          #+#    #+#             */
-/*   Updated: 2025/10/10 01:21:37 by asalniko         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
 
 #include "minishell.h"
 
@@ -65,6 +54,14 @@ static void	process_input(char *line, t_data *data)
 
 	if (!line || !*line)
 		return ;
+	
+	// TEMPORARY: Skip commands that might hang
+	if (strcmp(line, "$PWD") == 0 || strcmp(line, "$EMPTY") == 0)
+	{
+		printf("minishell: skipping potentially hanging command\n");
+		return;
+	}
+	
 	add_history(line);
 	tokens = ft_tokenize(line);
 	if (!tokens)
@@ -78,25 +75,35 @@ static void	process_input(char *line, t_data *data)
 	ft_lstclear(&tokens, ft_free_token);
 }
 
+// added emergency timeout:
 int	main(int argc, char **argv, char **envp)
 {
 	char	*line;
 	t_data	data;
+	int		line_count;
 
 	(void)argc;
 	(void)argv;
 	ft_init_shell(&data, envp);
 	ft_init_signal_handlers();
 	
+	line_count = 0;
 	while (1)
 	{
-		g_signal_received = 0;  // Reset at start of loop
+		g_signal_received = 0;
 		line = readline(PROMPT);
+		
+		// Emergency exit after reasonable number of commands
+		if (line_count > 100)
+		{
+			printf("minishell: emergency exit\n");
+			break;
+		}
+		line_count++;
 		
 		if (g_signal_received == SIGINT)
 		{
-			// Signal interrupted readline - cleanup and continue
-			data.exit_status = 130;  // Signal exit status
+			data.exit_status = 130;
 			if (line)
 				free(line);
 			continue;

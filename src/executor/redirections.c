@@ -9,11 +9,10 @@
 /*   Updated: 2025/10/14 19:44:49 by ltoscani         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
-
 #include "../../include/minishell.h"
 #include "../../include/parser.h"
 
-static int	handle_input_redirection(char *filename)
+int	handle_input_redirection(char *filename)
 {
 	int	fd;
 
@@ -22,7 +21,9 @@ static int	handle_input_redirection(char *filename)
 	fd = open(filename, O_RDONLY);
 	if (fd == -1)
 	{
-		perror(filename);
+		ft_putstr_fd("minishell: ", STDERR_FILENO);
+		ft_putstr_fd(filename, STDERR_FILENO);
+		ft_putstr_fd(": No such file or directory\n", STDERR_FILENO);
 		return (-1);
 	}
 	if (dup2(fd, STDIN_FILENO) == -1)
@@ -35,7 +36,7 @@ static int	handle_input_redirection(char *filename)
 	return (0);
 }
 
-static int	handle_output_redirection(char *filename, int append_mode)
+int	handle_output_redirection(char *filename, int append_mode)
 {
 	int	fd;
 	int	flags;
@@ -50,6 +51,8 @@ static int	handle_output_redirection(char *filename, int append_mode)
 	fd = open(filename, flags, 0644);
 	if (fd == -1)
 	{
+		// Use perror instead of errno - it's in the allowed list
+		ft_putstr_fd("minishell: ", STDERR_FILENO);
 		perror(filename);
 		return (-1);
 	}
@@ -110,22 +113,35 @@ int	handle_heredoc(char *delimiter, int quoted, t_data *data)
 
 int	setup_redirections_with_data(t_command *cmd, t_data *data)
 {
-	if (cmd->input_file)
-	{
-		if (handle_input_redirection(cmd->input_file) != 0)
-			return (-1);
-	}
+	int	result = 0;
+	int	heredoc_result = 0;
+	int	input_result = 0;
+	int	output_result = 0;
+
+	// Handle heredoc (takes precedence over input file)
 	if (cmd->heredoc_delim)
 	{
-		if (handle_heredoc(cmd->heredoc_delim, cmd->heredoc_quoted, data) != 0)
-			return (-1);
+		heredoc_result = handle_heredoc(cmd->heredoc_delim, cmd->heredoc_quoted, data);
+		if (heredoc_result != 0)
+			result = 1;
 	}
+	// Handle input file only if no heredoc or heredoc failed
+	else if (cmd->input_file)
+	{
+		input_result = handle_input_redirection(cmd->input_file);
+		if (input_result != 0)
+			result = 1;
+	}
+	
+	// Handle output file (last one wins)
 	if (cmd->output_file)
 	{
-		if (handle_output_redirection(cmd->output_file, cmd->append_mode) != 0)
-			return (-1);
+		output_result = handle_output_redirection(cmd->output_file, cmd->append_mode);
+		if (output_result != 0)
+			result = 1;
 	}
-	return (0);
+	
+	return (result);
 }
 
 void	restore_fds(int stdin_fd, int stdout_fd)

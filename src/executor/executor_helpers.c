@@ -53,9 +53,19 @@ char	*build_full_path(char *dir, char *cmd)
 
 void	command_not_found_error(char *cmd)
 {
-	ft_putstr_fd("minishell: ", STDERR_FILENO);
-	ft_putstr_fd(cmd, STDERR_FILENO);
-	ft_putstr_fd(": command not found\n", STDERR_FILENO);
+	// Check if it looks like an unexpanded variable
+	if (cmd && cmd[0] == '$')
+	{
+		ft_putstr_fd("minishell: ", STDERR_FILENO);
+		ft_putstr_fd(cmd, STDERR_FILENO);
+		ft_putstr_fd(": command not found\n", STDERR_FILENO);
+	}
+	else
+	{
+		ft_putstr_fd("minishell: ", STDERR_FILENO);
+		ft_putstr_fd(cmd, STDERR_FILENO);
+		ft_putstr_fd(": command not found\n", STDERR_FILENO);
+	}
 }
 
 int	get_exit_status(int status)
@@ -63,8 +73,16 @@ int	get_exit_status(int status)
 	if (WIFEXITED(status))
 		return (WEXITSTATUS(status));
 	else if (WIFSIGNALED(status))
-		return (128 + WTERMSIG(status));
-	return (1);
+	{
+		// Map common signals to bash-like exit codes
+		int sig = WTERMSIG(status);
+		if (sig == SIGINT)    // Ctrl-C
+			return (130);
+		else if (sig == SIGQUIT) // Ctrl-backslash
+			return (131);
+		return (128 + sig);
+	}
+	return (1);  // Default error
 }
 
 void	free_split(char **split)

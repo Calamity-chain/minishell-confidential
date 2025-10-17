@@ -18,11 +18,42 @@
 #include "../../include/parser.h"
 #include "../../include/minishell.h"
 
+static char	*process_redirection_filename(const char *filename)
+{
+	size_t	len;
+	char	first_char;
+
+	if (!filename)
+		return (NULL);
+	
+	len = ft_strlen(filename);
+	if (len < 2)
+		return (ft_strdup(filename));
+	
+	first_char = filename[0];
+	
+	// Remove surrounding quotes if present
+	if ((first_char == '\'' || first_char == '"') && 
+		filename[len - 1] == first_char)
+	{
+		return (ft_substr(filename, 1, len - 2));
+	}
+	
+	return (ft_strdup(filename));
+}
+
 static int	assign_target(char **dst, const char *src)
 {
+	char	*processed;
 	char	*dup;
 
-	dup = ft_strdup(src); // CHANGED strdup to ft_strdup
+	processed = process_redirection_filename(src);
+	if (!processed)
+		return (-1);
+		
+	dup = ft_strdup(processed);
+	free(processed);
+	
 	if (!dup)
 		return (-1);
 	free(*dst);
@@ -39,9 +70,9 @@ static void	print_syntax_error(const char *token)
 
 int	parse_redirection(t_token **current, t_command *cmd)
 {
-	t_token		*token;
+	t_token			*token;
 	t_token_type	redir_type;
-	const char	*bad;
+	const char		*bad;
 
 	token = *current;
 	skip_spaces(&token);

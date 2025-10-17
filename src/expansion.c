@@ -17,6 +17,7 @@
 
 
 // Helper function to expand a single variable
+// ENSURE expand_single_variable never returns NULL:
 static char	*expand_single_variable(t_data *data, const char *var_start, const char *var_end)
 {
 	char	*var_name;
@@ -24,12 +25,12 @@ static char	*expand_single_variable(t_data *data, const char *var_start, const c
 	size_t	len;
 
 	if (!var_start || !var_end || var_start >= var_end)
-		return (NULL);
+		return (ft_strdup(""));  // Return empty string, not NULL
 	
 	len = var_end - var_start;
 	var_name = ft_substr(var_start, 0, len);
 	if (!var_name)
-		return (NULL);
+		return (ft_strdup(""));  // Return empty string on error
 	
 	if (ft_strncmp(var_name, "?", 2) == 0)
 		expanded_value = ft_itoa(data->exit_status);
@@ -38,11 +39,11 @@ static char	*expand_single_variable(t_data *data, const char *var_start, const c
 	
 	free(var_name);
 	
+	// Always return a valid string, never NULL
 	if (expanded_value)
 		return (ft_strdup(expanded_value));
-	return (ft_strdup(""));
+	return (ft_strdup(""));  // Empty string for undefined variables
 }
-
 // Expand variables in a string with proper quote handling
 static char	*expand_with_quotes(t_data *data, const char *str, int in_single_quotes)
 {
@@ -87,14 +88,9 @@ static char	*expand_with_quotes(t_data *data, const char *str, int in_single_quo
 			
 			current = var_end;
 		}
-		else if (*current == '\'' || *current == '"')
-		{
-			// Skip quotes - they will be removed later
-			current++;
-		}
 		else
 		{
-			// Copy regular character
+			// Copy ALL characters including quotes - don't skip anything!
 			temp = malloc(ft_strlen(result) + 2);
 			if (!temp)
 			{
