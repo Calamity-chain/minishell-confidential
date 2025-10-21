@@ -53,16 +53,19 @@ void	ft_free_matrix(char **matrix)
 	free(matrix);
 }
 
-void	free_command(t_command *cmd)
+//UPDATED WITH NEW ARCHITECTURE
+void free_command(t_command *cmd)
 {
-	if (!cmd)
-		return ;
-	if (cmd->args)
-		ft_free_matrix(cmd->args);
-	if (cmd->arg_quoted)  // Free the new field
-		free(cmd->arg_quoted);
-	free(cmd->input_file);
-	free(cmd->output_file);
-	free(cmd->heredoc_delim);
-	free(cmd);
+    if (!cmd)
+        return;
+    
+    if (cmd->args)
+        ft_free_matrix(cmd->args);
+    if (cmd->arg_quoted)
+        free(cmd->arg_quoted);
+    
+    // Free the redirection list
+    clear_redirections(&cmd->redirections);
+    
+    free(cmd);
 }

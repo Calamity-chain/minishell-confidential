@@ -17,17 +17,21 @@
 # include "lexer.h" // t_token, t_token_type, ft_tokenize
 # include "libft.h"
 
+typedef struct s_redirection {
+    char	*filename;
+    int		type;  // REDIRECT_IN, REDIRECT_OUT, etc.
+    int		append_mode;
+    int		heredoc_quoted; // For heredoc
+    struct s_redirection *next;
+} t_redirection;
+
 typedef struct s_command {
-    char    **args;           // argv, args[0] is command name
-    int     *arg_quoted;      // Array of quote flags for each argument
-    char    *input_file;      // Input redirection file <
-    char    *output_file;     // Output redirection file >
-    int     append_mode;      // For >> redirection
-    char    *heredoc_delim;    // << delimiter
-    int     heredoc_quoted;    // 0/1: is there delimiter in quotes
-    int     pipe_output;       // 0/1: if there is | on the right
-    int     from_env_var;      // 1 if command name came from env var expansion
-    struct s_command *next;   // For pipelines
+    char    **args;
+    int     *arg_quoted;
+    t_redirection *redirections;  // Linked list of all redirections
+    int     pipe_output;
+    int     from_env_var;
+    struct s_command *next;
 } t_command;
 
 typedef struct s_arglist 
@@ -47,6 +51,12 @@ typedef struct s_quotedlist
 t_command	*parse_pipeline(t_token *tok_head);
 t_command	*parse_command(t_token **current);
 int		parse_redirection(t_token **current, t_command *cmd);
+
+// Redirection list management ->> ADDED WITH NEW ARCHITECTURE
+t_redirection  *create_redirection(char *filename, t_token_type type, int append_mode, int heredoc_quoted);
+int             add_redirection(t_redirection **head, t_redirection *new_redir);
+void            clear_redirections(t_redirection **head);
+void            free_redirection(t_redirection *redir);
 
 // quote list management //
 int		quotedlist_push_back(t_quotedlist **head, int quoted);

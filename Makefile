@@ -35,6 +35,7 @@ SRCS = \
 	executor/executor \
     	executor/executor_helpers \
     	executor/redirections \
+    	executor/redirection_list \
     	executor/pipes \
 	expansion \
 	free \

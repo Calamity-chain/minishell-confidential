@@ -111,36 +111,99 @@ int	handle_heredoc(char *delimiter, int quoted, t_data *data)
 	return (0);
 }
 
-int	setup_redirections_with_data(t_command *cmd, t_data *data)
+int setup_redirections_with_data(t_command *cmd, t_data *data)
 {
-	int	heredoc_result = 0;
-	int	input_result = 0;
-	int	output_result = 0;
+    t_redirection *redir;
+    int result;
 
-	// Handle heredoc
-	if (cmd->heredoc_delim)
-	{
-		heredoc_result = handle_heredoc(cmd->heredoc_delim, cmd->heredoc_quoted, data);
-		if (heredoc_result != 0)
-			return (1);  // Return immediately on error
-	}
-	// Handle input file
-	else if (cmd->input_file)
-	{
-		input_result = handle_input_redirection(cmd->input_file);
-		if (input_result != 0)
-			return (1);  // Return immediately on error
-	}
-	
-	// Handle output file
-	if (cmd->output_file)
-	{
-		output_result = handle_output_redirection(cmd->output_file, cmd->append_mode);
-		if (output_result != 0)
-			return (1);  // Return immediately on error
-	}
-	
-	return (0);
+    // First pass: Validate all redirections
+    redir = cmd->redirections;
+    while (redir)
+    {
+        // Check input file existence
+        if ((redir->type == REDIRECT_IN || redir->type == HEREDOC) && 
+            access(redir->filename, F_OK) == -1)
+        {
+            ft_putstr_fd("minishell: ", STDERR_FILENO);
+            ft_putstr_fd(redir->filename, STDERR_FILENO);
+            ft_putstr_fd(": No such file or directory\n", STDERR_FILENO);
+            return (1);
+        }
+        
+        // Check output file permissions (try to create/open)
+        if ((redir->type == REDIRECT_OUT || redir->type == APPEND_OUT))
+        {
+            int flags = O_WRONLY | O_CREAT | (redir->append_mode ? O_APPEND : O_TRUNC);
+            int test_fd = open(redir->filename, flags, 0644);
+            if (test_fd == -1)
+            {
+                ft_putstr_fd("minishell: ", STDERR_FILENO);
+                ft_putstr_fd(redir->filename, STDERR_FILENO);
+                ft_putstr_fd(": Permission denied\n", STDERR_FILENO);
+                return (1);
+            }
+            close(test_fd);
+        }
+        redir = redir->next;
+    }
+
+    // Second pass: Apply redirections (last one of each type wins)
+    int input_applied = 0;
+    int output_applied = 0;
+    
+    redir = cmd->redirections;
+    while (redir)
+    {
+        // Apply the LAST input redirection
+        if ((redir->type == REDIRECT_IN || redir->type == HEREDOC) && !input_applied)
+        {
+            // Walk to find the last input redirection
+            t_redirection *last_input = redir;
+            t_redirection *temp = redir->next;
+            while (temp)
+            {
+                if (temp->type == REDIRECT_IN || temp->type == HEREDOC)
+                    last_input = temp;
+                temp = temp->next;
+            }
+            
+            // Apply the last input redirection
+            if (last_input->type == HEREDOC)
+                result = handle_heredoc(last_input->filename, last_input->heredoc_quoted, data);
+            else
+                result = handle_input_redirection(last_input->filename);
+            
+            if (result != 0)
+                return (1);
+            
+            input_applied = 1;
+        }
+        
+        // Apply the LAST output redirection  
+        if ((redir->type == REDIRECT_OUT || redir->type == APPEND_OUT) && !output_applied)
+        {
+            // Walk to find the last output redirection
+            t_redirection *last_output = redir;
+            t_redirection *temp = redir->next;
+            while (temp)
+            {
+                if (temp->type == REDIRECT_OUT || temp->type == APPEND_OUT)
+                    last_output = temp;
+                temp = temp->next;
+            }
+            
+            // Apply the last output redirection
+            result = handle_output_redirection(last_output->filename, last_output->append_mode);
+            if (result != 0)
+                return (1);
+            
+            output_applied = 1;
+        }
+        
+        redir = redir->next;
+    }
+    
+    return (0);
 }
 
 void	restore_fds(int stdin_fd, int stdout_fd)

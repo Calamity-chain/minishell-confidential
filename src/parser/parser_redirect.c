@@ -38,6 +38,7 @@ static char	*process_redirection_filename(const char *filename)
 	return (ft_strdup(filename));
 }
 
+/* REMOVED WITH NEW ARCHITECTURE IMPLEMENTATION
 static int	assign_target(char **dst, const char *src)
 {
 	char	*processed;
@@ -55,7 +56,7 @@ static int	assign_target(char **dst, const char *src)
 	free(*dst);
 	*dst = dup;
 	return (0);
-}
+}*/
 
 static void	print_syntax_error(const char *token)
 {
@@ -109,11 +110,14 @@ static char	*concatenate_adjacent_tokens(t_token **token)
 	return (result);
 }
 
+//UPDATED WITH NEW ARCHITECTURE
 int	parse_redirection(t_token **current, t_command *cmd)
 {
 	t_token			*token;
 	t_token_type	redir_type;
 	const char		*bad;
+	char			*full_filename;
+	t_redirection	*new_redir;
 
 	token = *current;
 	skip_spaces(&token);
@@ -140,38 +144,29 @@ int	parse_redirection(t_token **current, t_command *cmd)
 	}
 
 	// NEW: Concatenate adjacent string tokens for the filename
-	char *full_filename = concatenate_adjacent_tokens(&token);
+	full_filename = concatenate_adjacent_tokens(&token);
 	
 	if (!full_filename)
 		return (-1);
 
-	if (redir_type == REDIRECT_IN 
-		&& assign_target(&cmd->input_file, full_filename) < 0)
-	{
-		free(full_filename);
-		return (-1);
-	}
-	if ((redir_type == REDIRECT_OUT || redir_type == APPEND_OUT) 
-		&& assign_target(&cmd->output_file, full_filename) < 0)
-	{
-		free(full_filename);
-		return (-1);
-	}
-	if (redir_type == HEREDOC 
-		&& assign_target(&cmd->heredoc_delim, full_filename) < 0)
+	// Create new redirection (we use the processed filename directly)
+	new_redir = create_redirection(full_filename, redir_type, 
+								  (redir_type == APPEND_OUT) ? 1 : 0,
+								  (redir_type == HEREDOC && token && token->type == STRING_LITERAL) ? 1 : 0);
+	
+	if (!new_redir)
 	{
 		free(full_filename);
 		return (-1);
 	}
 	
-	free(full_filename);
+	// Add to redirection list
+	if (add_redirection(&cmd->redirections, new_redir) != 0)
+	{
+		free_redirection(new_redir);
+		return (-1);
+	}
 	
-	if (redir_type == APPEND_OUT)
-		cmd->append_mode = 1;
-	else if (redir_type == REDIRECT_OUT)
-		cmd->append_mode = 0;
-	if (redir_type == HEREDOC)
-		cmd->heredoc_quoted = (token->type == STRING_LITERAL);
 	*current = token;
 	return (0);
 }

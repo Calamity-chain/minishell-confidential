@@ -120,7 +120,6 @@ static void	execute_external(t_command *cmd, t_data *data)
 		free(cmd_path);
 		exit(127);
 	}
-	
 	// CRITICAL FIX: Handle directory case
 	if (S_ISDIR(sb.st_mode))
 	{

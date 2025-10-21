@@ -67,6 +67,12 @@ static void	process_input(char *line, t_data *data)
 	if (!tokens)
 		return ;
 	pipeline = parse_pipeline(tokens->content);
+	if (!pipeline)
+	{
+		data->exit_status = 1;  // ADD THIS LINE
+		ft_lstclear(&tokens, ft_free_token);
+		return;
+	}
 	if (pipeline)
 	{
 		execute_pipeline(pipeline, data);

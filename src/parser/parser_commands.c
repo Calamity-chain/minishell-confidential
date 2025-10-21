@@ -14,6 +14,7 @@
 #include "../../include/parser.h"
 #include "../../include/minishell.h"
 
+/* REMOVED WITH NEW ARCHITECTURE IMPLEMENTATION
 static void	free_redirection_if_exists(t_command *cmd, t_token_type type)
 {
 	if (type == REDIRECT_IN && cmd->input_file)
@@ -33,7 +34,7 @@ static void	free_redirection_if_exists(t_command *cmd, t_token_type type)
 		cmd->heredoc_delim = NULL;
 		cmd->heredoc_quoted = 0;
 	}
-}
+}*/
 
 t_command	*parse_command(t_token **current)
 {
@@ -48,13 +49,9 @@ t_command	*parse_command(t_token **current)
 		return (NULL);
 	cmd->args = NULL;
 	cmd->arg_quoted = NULL;
-	cmd->input_file = NULL;
-	cmd->output_file = NULL;
-	cmd->append_mode = 0;
-	cmd->heredoc_delim = NULL;
-	cmd->heredoc_quoted = 0;
+	cmd->redirections = NULL; 
 	cmd->pipe_output = 0;
-	cmd->from_env_var = 0;  // NEW: Initialize to 0
+	cmd->from_env_var = 0;
 	cmd->next = NULL;
 	
 	arglist = NULL;
@@ -66,9 +63,6 @@ t_command	*parse_command(t_token **current)
 	// Parse initial redirections
 	while (token && token->type != END_OF_FILE && is_redirection(token->type))
 	{
-		// Free previous redirection of same type if it exists
-		free_redirection_if_exists(cmd, token->type);
-		
 		if (parse_redirection(&token, cmd) != 0)
 		{
 			arglist_clear(&arglist, 1);
@@ -89,9 +83,6 @@ t_command	*parse_command(t_token **current)
 		}
 		if (is_redirection(token->type))
 		{
-			// Free previous redirection of same type if it exists
-			free_redirection_if_exists(cmd, token->type);
-			
 			if (parse_redirection(&token, cmd) != 0)
 			{
 				arglist_clear(&arglist, 1);
@@ -149,7 +140,8 @@ t_command	*parse_command(t_token **current)
 		skip_spaces(&token);
 	}
 	
-	if (!arglist && !cmd->input_file && !cmd->output_file && !cmd->heredoc_delim)
+	// NEW: Check if we have no arguments AND no redirections
+	if (!arglist && !cmd->redirections)
 	{
 		printf("syntax error near unexp token `newline`\n");
 		free_command(cmd);
