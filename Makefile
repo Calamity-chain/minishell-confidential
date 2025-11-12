@@ -32,12 +32,16 @@ SRCS = \
 	parser/parser_redirect \
 	parser/parser_command_helper \
 	parser/parser_command_helper2 \
+	parser/parser_redirect_helper \
+	parser/parser_command_helper3 \
 	executor/executor \
     	executor/executor_helpers \
     	executor/redirections \
     	executor/redirection_list \
     	executor/pipes \
 	expansion \
+	expansion_helper \
+	expansion_helper2 \
 	free \
 	main \
 	signals \

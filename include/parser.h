@@ -59,6 +59,14 @@ t_redirection	*create_redirection(char *filename, t_token_type type,
 int				add_redirection(t_redirection **head, t_redirection *new_redir);
 void			clear_redirections(t_redirection **head);
 void			free_redirection(t_redirection *redir);
+char			*process_redirection_filename(const char *filename);
+void			print_syntax_error(const char *token);
+int				is_filename_token(t_token *t);
+void			fill_redir_flags(t_token_type type, t_token *tok_after,
+					int *append_mode, int *heredoc_quoted);
+int				parse_leading_redirs(t_token **token, t_command *cmd);
+int				syntax_err_token(t_token *cur);
+int				handle_space_or_redir(t_token **cur, t_command *cmd);
 
 /* quote list management */
 int				quotedlist_push_back(t_quotedlist **head, int quoted);

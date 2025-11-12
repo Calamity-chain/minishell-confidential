@@ -14,111 +14,98 @@
 #include "../../include/parser.h"
 #include "../../include/minishell.h"
 
-static char	*process_redirection_filename(const char *filename)
+static int	append_processed_value(char **res, const char *value)
 {
-	size_t	len;
-	char	first_char;
+	char	*proc;
+	char	*tmp;
 
-	if (!filename)
-		return (NULL);
-	len = ft_strlen(filename);
-	if (len < 2)
-		return (ft_strdup(filename));
-	first_char = filename[0];
-	if ((first_char == '\'' || first_char == '"')
-		&& filename[len - 1] == first_char)
-		return (ft_substr(filename, 1, len - 2));
-	return (ft_strdup(filename));
-}
-
-static void	print_syntax_error(const char *token)
-{
-	if (!token || !*token)
-		token = "newline";
-	printf("syntax error near unexp. token `%s`\n", token);
+	proc = process_redirection_filename(value);
+	if (!proc)
+		return (-1);
+	tmp = ft_strjoin(*res, proc);
+	free(*res);
+	free(proc);
+	if (!tmp)
+		return (-1);
+	*res = tmp;
+	return (0);
 }
 
 static char	*concatenate_adjacent_tokens(t_token **token)
 {
-	char	*result;
-	char	*temp;
-	t_token	*current;
-	char	*processed;
+	t_token	*cur;
+	char	*res;
 
 	if (!token || !*token)
 		return (NULL);
-	current = *token;
-	result = ft_strdup("");
-	if (!result)
+	cur = *token;
+	res = ft_strdup("");
+	if (!res)
 		return (NULL);
-	while (current && (current->type == WORD
-			|| current->type == STRING_LITERAL || current->type == ENV_VAR))
+	while (cur && (cur->type == WORD || cur->type == STRING_LITERAL
+			|| cur->type == ENV_VAR))
 	{
-		processed = process_redirection_filename(current->value);
-		if (!processed)
-		{
-			free(result);
+		if (append_processed_value(&res, cur->value) != 0)
 			return (NULL);
-		}
-		temp = ft_strjoin(result, processed);
-		free(result);
-		free(processed);
-		if (!temp)
-			return (NULL);
-		result = temp;
-		current = current->next;
+		cur = cur->next;
 	}
-	*token = current;
-	return (result);
+	*token = cur;
+	return (res);
+}
+
+static int	syntax_err_tok(t_token *token)
+{
+	const char	*bad;
+
+	bad = NULL;
+	if (token)
+		bad = token->value;
+	print_syntax_error(bad);
+	return (-1);
+}
+
+static int	make_and_add_redir(t_command *cmd, t_token_type type,
+				char *fname, t_token *after_tok)
+{
+	int				append_mode;
+	int				heredoc_quoted;
+	t_redirection	*node;
+
+	fill_redir_flags(type, after_tok, &append_mode, &heredoc_quoted);
+	node = create_redirection(fname, type, append_mode, heredoc_quoted);
+	if (!node)
+	{
+		free(fname);
+		return (-1);
+	}
+	if (add_redirection(&cmd->redirections, node) != 0)
+	{
+		free_redirection(node);
+		return (-1);
+	}
+	return (0);
 }
 
 int	parse_redirection(t_token **current, t_command *cmd)
 {
 	t_token			*token;
-	t_token_type	redir_type;
-	const char		*bad;
-	char			*full_filename;
-	t_redirection	*new_redir;
+	t_token_type	type;
+	char			*fname;
 
 	token = *current;
 	skip_spaces(&token);
 	if (!token || !is_redirection(token->type))
-	{
-		bad = NULL;
-		if (token)
-			bad = token->value;
-		print_syntax_error(bad);
-		return (-1);
-	}
-	redir_type = token->type;
+		return (syntax_err_tok(token));
+	type = token->type;
 	token = token->next;
 	skip_spaces(&token);
-	if (!token || (token->type != WORD
-			&& token->type != STRING_LITERAL
-			&& token->type != ENV_VAR))
-	{
-		bad = NULL;
-		if (token)
-			bad = token->value;
-		print_syntax_error(bad);
+	if (!is_filename_token(token))
+		return (syntax_err_tok(token));
+	fname = concatenate_adjacent_tokens(&token);
+	if (!fname)
 		return (-1);
-	}
-	full_filename = concatenate_adjacent_tokens(&token);
-	if (!full_filename)
+	if (make_and_add_redir(cmd, type, fname, token) != 0)
 		return (-1);
-	new_redir = create_redirection(full_filename, redir_type,
-								  (redir_type == APPEND_OUT) ? 1 : 0,
-								  (redir_type == HEREDOC && token && token->type == STRING_LITERAL) ? 1 : 0);
-	if (!new_redir)
-	{
-		free(full_filename);
-		return (-1);
-	}
-	if (add_redirection(&cmd->redirections, new_redir) != 0)
-	{
-		free_redirection(new_redir);
-		return (-1);
-	}
 	*current = token;
 	return (0);
 }

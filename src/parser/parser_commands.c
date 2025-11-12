@@ -30,23 +30,7 @@ static t_command	*alloc_command(void)
 	return (cmd);
 }
 
-static int	parse_leading_redirs(t_token **tok, t_command *cmd)
-{
-	t_token	*cur;
-
-	cur = *tok;
-	skip_spaces(&cur);
-	while (cur && cur->type != END_OF_FILE && is_redirection(cur->type))
-	{
-		if (parse_redirection(&cur, cmd) != 0)
-			return (-1);
-		skip_spaces(&cur);
-	}
-	*tok = cur;
-	return (0);
-}
-
-static int	push_arg_and_quote(t_token **tok, t_arglist **alist,
+static int	push_arg_and_quote(t_token **token, t_arglist **alist,
 				t_quotedlist **qlist)
 {
 	t_token	*start;
@@ -54,8 +38,8 @@ static int	push_arg_and_quote(t_token **tok, t_arglist **alist,
 	char	*arg;
 	int		overall;
 
-	start = *tok;
-	arg = parse_one_arg(tok);
+	start = *token;
+	arg = parse_one_arg(token);
 	if (!arg || arg_push_back(alist, arg) != 0)
 	{
 		if (arg)
@@ -64,7 +48,7 @@ static int	push_arg_and_quote(t_token **tok, t_arglist **alist,
 	}
 	overall = start->quoted;
 	tmp = start->next;
-	while (tmp && tmp != *tok && is_arg_token(tmp->type))
+	while (tmp && tmp != *token && is_arg_token(tmp->type))
 	{
 		if (tmp->quoted == Q_SQUOTE)
 			overall = Q_SQUOTE;
@@ -75,40 +59,33 @@ static int	push_arg_and_quote(t_token **tok, t_arglist **alist,
 	return (0);
 }
 
-static int	syntax_err_token(t_token *cur)
-{
-	printf("syntax error near unexp token `%s`\n", display_token(cur));
-	return (-1);
-}
-
-static int	parse_args_and_redirs(t_token **tok, t_command *cmd,
+static int	parse_args_and_redirs(t_token **token, t_command *cmd,
 				t_arglist **alist, t_quotedlist **qlist)
 {
 	t_token	*cur;
+	int		h;
 
-	cur = *tok;
+	cur = *token;
 	while (cur && cur->type != END_OF_FILE && !is_pipe(cur->type))
 	{
-		if (cur->type == SPACES) { skip_spaces(&cur); continue ; }
-		if (is_redirection(cur->type))
-		{
-			if (parse_redirection(&cur, cmd) != 0)
-				return (-1);
-			skip_spaces(&cur);
+		h = handle_space_or_redir(&cur, cmd);
+		if (h < 0)
+			return (-1);
+		if (h > 0)
 			continue ;
-		}
 		if (!is_arg_token(cur->type))
 			return (syntax_err_token(cur));
 		if (push_arg_and_quote(&cur, alist, qlist) != 0)
 			return (-1);
 	}
-	*tok = cur;
+	*token = cur;
 	return (0);
 }
 
 static t_command	*finalize_command(t_command *cmd, t_arglist **alist,
 				t_quotedlist **qlist, t_token **cur)
 {
+	(void)cur;
 	if (!*alist && !cmd->redirections)
 	{
 		printf("syntax error near unexp token `newline`\n");
@@ -122,7 +99,6 @@ static t_command	*finalize_command(t_command *cmd, t_arglist **alist,
 		cmd->arg_quoted = quotedlist_to_array(*qlist);
 	arglist_clear(alist, 0);
 	quotedlist_clear(qlist);
-	*cur = *cur;
 	return (cmd);
 }
 
@@ -140,16 +116,12 @@ t_command	*parse_command(t_token **current)
 	qlist = NULL;
 	tok = *current;
 	if (parse_leading_redirs(&tok, cmd) != 0)
-	{
-		free_command(cmd);
-		return (NULL);
-	}
+		return (free_command(cmd), NULL);
 	if (parse_args_and_redirs(&tok, cmd, &alist, &qlist) != 0)
 	{
 		arglist_clear(&alist, 1);
 		quotedlist_clear(&qlist);
-		free_command(cmd);
-		return (NULL);
+		return (free_command(cmd), NULL);
 	}
 	cmd = finalize_command(cmd, &alist, &qlist, &tok);
 	if (!cmd)

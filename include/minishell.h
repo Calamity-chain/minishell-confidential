@@ -48,13 +48,19 @@ typedef struct s_pipe_state
 }	t_pipe_state;
 
 /* expansion */
-int		handle_heredoc(char *delimiter, int quoted, t_data *data);
 char	*handle_quoted_env(t_data *data, t_token *token, char **quoted_string);
 void	handle_env(t_data *data, t_command *command, int *ac, t_token *token);
 char	*expand_tilda(t_data *data, const char *env_name);
 char	*expand_env_variable(t_data *data, const char *env_name);
 char	*ft_getenv(t_data *data, const char *env_name);
 char	*expand_env_variable_in_string(t_data *data, const char *str);
+char	*expand_single_variable(t_data *data,
+			const char *var_start, const char *var_end);
+int		append_char(char **res, char c);
+int		append_var(t_data *data, char **res, const char **pcur,
+			int in_squotes);
+char	*expand_with_quotes(t_data *data, const char *str,
+			int in_single_quotes);
 
 /* builtins */
 int		ft_pwd(void);
@@ -95,5 +101,6 @@ void	cleanup_pipe_redirections(t_command *cmd, t_pipe_state *st);
 void	setup_child_signals(void);
 char	*expand_heredoc_line(char *line, t_data *data);
 int		setup_redirections_with_data(t_command *cmd, t_data *data);
+int		handle_heredoc(char *delimiter, int quoted, t_data *data);
 
 #endif
