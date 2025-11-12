@@ -22,21 +22,12 @@ static char	*remove_outer_quotes(const char *str)
 
 	if (!str || ft_strlen(str) < 2)
 		return (ft_strdup(str));
-	
 	first_char = str[0];
 	len = ft_strlen(str);
-	
-	// Only remove if the first and last characters are matching quotes
 	if ((first_char == '\'' || first_char == '"') && str[len - 1] == first_char)
-	{
-		// Remove both outer quotes
 		result = ft_substr(str, 1, len - 2);
-	}
 	else
-	{
 		result = ft_strdup(str);
-	}
-	
 	return (result);
 }
 
@@ -71,31 +62,61 @@ char	*parse_one_arg(t_token **current)
 {
 	t_token	*cursor;
 	char	*arg;
+	char	*unquoted;
 
 	cursor = *current;
 	arg = NULL;
-	if (!cursor || !is_arg_token(cursor->type))
-		return (NULL);
-	
-	// Concatenate all adjacent argument tokens
 	while (cursor && is_arg_token(cursor->type))
 	{
-		// For quoted tokens, we need to remove the quotes during concatenation
 		if (cursor->type == STRING_LITERAL && cursor->value)
 		{
-			char *unquoted = remove_outer_quotes(cursor->value);
+			unquoted = remove_outer_quotes(cursor->value);
 			arg = join_segments(arg, unquoted);
 			free(unquoted);
 		}
 		else
-		{
 			arg = join_segments(arg, cursor->value);
-		}
-		
 		if (!arg)
 			return (NULL);
 		cursor = cursor->next;
 	}
 	*current = cursor;
 	return (arg);
+}
+
+int	quotedlist_push_back(t_quotedlist **head, int quoted)
+{
+	t_quotedlist	*new_node;
+	t_quotedlist	*cursor;
+
+	new_node = (t_quotedlist *)malloc(sizeof(t_quotedlist));
+	if (!new_node)
+		return (-1);
+	new_node->quoted = quoted;
+	new_node->next = NULL;
+	if (!*head)
+	{
+		*head = new_node;
+		return (0);
+	}
+	cursor = *head;
+	while (cursor->next)
+		cursor = cursor->next;
+	cursor->next = new_node;
+	return (0);
+}
+
+void	quotedlist_clear(t_quotedlist **head)
+{
+	t_quotedlist	*node;
+	t_quotedlist	*next;
+
+	node = *head;
+	while (node)
+	{
+		next = node->next;
+		free(node);
+		node = next;
+	}
+	*head = NULL;
 }

@@ -12,7 +12,7 @@
 
 #include "minishell.h"
 
-volatile sig_atomic_t g_signal_received = 0;
+volatile sig_atomic_t	g_signal_received = 0;
 
 static char	**copy_envp(char **envp)
 {
@@ -54,14 +54,6 @@ static void	process_input(char *line, t_data *data)
 
 	if (!line || !*line)
 		return ;
-	
-	/*// TEMPORARY: Skip commands that might hang
-	if (ft_strncmp(line, "$PWD", 5) == 0 || ft_strncmp(line, "$EMPTY", 7) == 0)
-	{
-		printf("minishell: skipping potentially hanging command\n");
-		return;
-	}*/
-	
 	add_history(line);
 	tokens = ft_tokenize(line);
 	if (!tokens)
@@ -69,9 +61,9 @@ static void	process_input(char *line, t_data *data)
 	pipeline = parse_pipeline(tokens->content);
 	if (!pipeline)
 	{
-		data->exit_status = 1;  // ADD THIS LINE
+		data->exit_status = 1;
 		ft_lstclear(&tokens, ft_free_token);
-		return;
+		return ;
 	}
 	if (pipeline)
 	{
@@ -81,48 +73,39 @@ static void	process_input(char *line, t_data *data)
 	ft_lstclear(&tokens, ft_free_token);
 }
 
-int	main(int argc, char **argv, char **envp)
+static void	repl_loop(t_data *data)
 {
 	char	*line;
+
+	while (1)
+	{
+		g_signal_received = 0;
+		line = readline(PROMPT);
+		if (!line)
+		{
+			printf("exit\n");
+			break ;
+		}
+		if (g_signal_received == SIGINT)
+		{
+			data->exit_status = 130;
+			free(line);
+			continue ;
+		}
+		process_input(line, data);
+		free(line);
+	}
+}
+
+int	main(int argc, char **argv, char **envp)
+{
 	t_data	data;
-	int		line_count;
 
 	(void)argc;
 	(void)argv;
 	ft_init_shell(&data, envp);
 	ft_init_signal_handlers();
-	
-	line_count = 0;
-	while (1)
-	{
-		g_signal_received = 0;
-		line = readline(PROMPT);
-		
-		// Emergency exit after reasonable number of commands
-		if (line_count > 100)
-		{
-			printf("minishell: emergency exit\n");
-			break;
-		}
-		line_count++;
-		
-		if (g_signal_received == SIGINT)
-		{
-			data.exit_status = 130;
-			if (line)
-				free(line);
-			continue;
-		}
-		
-		if (!line)
-		{
-			printf("exit\n");
-			break;
-		}
-		
-		process_input(line, &data);
-		free(line);
-	}
+	repl_loop(&data);
 	ft_free_matrix(data.env);
 	return (data.exit_status);
 }

@@ -20,9 +20,9 @@ int	ft_isquote(char c)
 
 int	ft_is_special_char(char c)
 {
-	return (c == '|' || c == '<' || c == '>' || 
-		c == '(' || c == ')' || c == '$' || 
-		ft_isquote(c) || ft_isspace(c));
+	return (c == '|' || c == '<' || c == '>'
+		|| c == '(' || c == ')' || c == '$'
+		|| ft_isquote(c) || ft_isspace(c));
 }
 
 int	ft_handle_quote(const char *str, char quote_type)

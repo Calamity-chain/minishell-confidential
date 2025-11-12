@@ -28,23 +28,25 @@ static int	is_numeric(const char *str)
 	
 	// Remove all quotes
 	clean = malloc(ft_strlen(str) + 1);
+	if (!clean)
+		return (0);
+	i = 0;
 	j = 0;
-	for (i = 0; str[i]; i++)
+	while (str[i])
 	{
 		if (str[i] != '"' && str[i] != '\'')
 			clean[j++] = str[i];
+		i++;
 	}
 	clean[j] = '\0';
-	
-	// Check if clean string is numeric
+
 	i = 0;
 	if (clean[i] == '-' || clean[i] == '+')
 		i++;
-	
 	has_digits = 0;
 	while (clean[i])
 	{
-		if (!ft_isdigit(clean[i]))
+		if (!ft_isdigit((unsigned char)clean[i]))
 		{
 			free(clean);
 			return (0);
@@ -52,7 +54,6 @@ static int	is_numeric(const char *str)
 		has_digits = 1;
 		i++;
 	}
-	
 	free(clean);
 	return (has_digits);
 }
@@ -70,16 +71,13 @@ static char	*remove_quotes_for_exit(const char *str)
 
 	if (!str)
 		return (NULL);
-	
 	result = malloc(ft_strlen(str) + 1);
 	if (!result)
 		return (NULL);
-	
 	i = 0;
 	j = 0;
 	in_quotes = 0;
 	quote_char = 0;
-	
 	while (str[i])
 	{
 		if (!in_quotes && (str[i] == '"' || str[i] == '\''))
@@ -88,18 +86,18 @@ static char	*remove_quotes_for_exit(const char *str)
 			quote_char = str[i];
 		}
 		else if (in_quotes && str[i] == quote_char)
-		{
 			in_quotes = 0;
-		}
 		else
-		{
 			result[j++] = str[i];
-		}
 		i++;
 	}
 	result[j] = '\0';
-	
 	return (result);
+}
+
+static void	print_exit_line(void)
+{
+	ft_putendl_fd("exit", STDOUT_FILENO);
 }
 
 /**
@@ -117,19 +115,26 @@ int	ft_exit(char **args)
 		return (1);  // Don't exit, just return error
 	}
 	if (!args[1])
+	{
+		print_exit_line();
 		exit(0);
-	
+	}
 	if (!is_numeric(args[1]))
 	{
-		ft_putstr_fd("minishell: exit: numeric argument required\n", STDERR_FILENO);
+		print_exit_line();
+		ft_putstr_fd("minishell: exit: ", STDERR_FILENO);
+		ft_putstr_fd(args[1], STDERR_FILENO);
+		ft_putstr_fd(": numeric argument required\n", STDERR_FILENO);
 		exit(2);
 	}
 	
 	// Remove quotes before conversion
 	clean_arg = remove_quotes_for_exit(args[1]);
 	if (!clean_arg)
+	{
+		print_exit_line();
 		exit(1);
-	
+	}
 	exit_code = ft_atoi(clean_arg);
 	free(clean_arg);
 	
@@ -138,5 +143,6 @@ int	ft_exit(char **args)
 	if (exit_code < 0)
 		exit_code += 256;
 	
+	print_exit_line();
 	exit((unsigned char)exit_code);
 }

@@ -16,7 +16,7 @@
 
 int	is_redirection(t_token_type type)
 {
-	return (type == REDIRECT_IN || type == REDIRECT_OUT 
+	return (type == REDIRECT_IN || type == REDIRECT_OUT
 		|| type == APPEND_OUT || type == HEREDOC);
 }
 
@@ -29,4 +29,21 @@ void	skip_spaces(t_token **token)
 {
 	while (*token && (*token)->type == SPACES)
 		*token = (*token)->next;
+}
+
+void	arglist_clear(t_arglist **head, int free_strings)
+{
+	t_arglist	*node;
+	t_arglist	*next;
+
+	node = *head;
+	while (node)
+	{
+		next = node->next;
+		if (free_strings && node->arg)
+			free(node->arg);
+		free(node);
+		node = next;
+	}
+	*head = NULL;
 }

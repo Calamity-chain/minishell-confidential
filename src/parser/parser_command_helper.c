@@ -14,45 +14,6 @@
 #include "../../include/parser.h"
 #include "../../include/minishell.h"
 
-int	quotedlist_push_back(t_quotedlist **head, int quoted)
-{
-	t_quotedlist	*new_node;
-	t_quotedlist	*cursor;
-
-	new_node = (t_quotedlist *)malloc(sizeof(t_quotedlist));
-	if (!new_node)
-		return (-1);
-	new_node->quoted = quoted;
-	new_node->next = NULL;
-	
-	if (!*head)
-	{
-		*head = new_node;
-		return (0);
-	}
-	
-	cursor = *head;
-	while (cursor->next)
-		cursor = cursor->next;
-	cursor->next = new_node;
-	return (0);
-}
-
-void	quotedlist_clear(t_quotedlist **head)
-{
-	t_quotedlist	*node;
-	t_quotedlist	*next;
-
-	node = *head;
-	while (node)
-	{
-		next = node->next;
-		free(node);
-		node = next;
-	}
-	*head = NULL;
-}
-
 int	*quotedlist_to_array(t_quotedlist *head)
 {
 	size_t			count;
@@ -67,11 +28,9 @@ int	*quotedlist_to_array(t_quotedlist *head)
 		count++;
 		temp = temp->next;
 	}
-	
 	array = (int *)malloc(sizeof(int) * (count + 1));
 	if (!array)
 		return (NULL);
-	
 	i = 0;
 	temp = head;
 	while (i < count)
@@ -80,8 +39,7 @@ int	*quotedlist_to_array(t_quotedlist *head)
 		temp = temp->next;
 		i++;
 	}
-	array[count] = -1; // Sentinel value
-	
+	array[count] = -1;
 	return (array);
 }
 
@@ -158,21 +116,4 @@ int	arg_push_back(t_arglist **head, char *arg)
 		cursor = cursor->next;
 	cursor->next = new_node;
 	return (0);
-}
-
-void	arglist_clear(t_arglist **head, int free_strings)
-{
-	t_arglist	*node;
-	t_arglist	*next;
-
-	node = *head;
-	while (node)
-	{
-		next = node->next;
-		if (free_strings && node->arg)
-			free(node->arg);
-		free(node);
-		node = next;
-	}
-	*head = NULL;
 }

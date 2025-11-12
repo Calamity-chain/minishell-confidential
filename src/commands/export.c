@@ -31,7 +31,6 @@ static int	is_valid_identifier(char *str)
 static int	add_env_variable(t_data *data, char *var)
 {
 	int		count;
-	int		i;
 	char	**new_env;
 
 	count = 0;
@@ -40,9 +39,8 @@ static int	add_env_variable(t_data *data, char *var)
 	new_env = malloc(sizeof(char *) * (count + 2));
 	if (!new_env)
 		return (1);
-	i = -1;
-	while (++i < count)
-		new_env[i] = data->env[i];
+	if (count > 0)
+		ft_memcpy(new_env, data->env, sizeof(char *) * count);
 	new_env[count] = ft_strdup(var);
 	if (!new_env[count])
 	{
@@ -59,31 +57,49 @@ static int	add_or_update_env_variable(t_data *data, char *var)
 {
 	int		i;
 	size_t	var_len;
-	char	*equals_pos;
+	char	*equal;
 
-	// Find the variable name part (before =)
-	equals_pos = ft_strchr(var, '=');
-	if (!equals_pos)
-		return (0);  // No value to set
-		
-	var_len = equals_pos - var;
-	
-	// Check if variable already exists
+	equal = ft_strchr(var, '=');
+	if (!equal)
+		return (0);
+	var_len = (size_t)(equal - var);
 	i = 0;
 	while (data->env[i])
 	{
-		if (ft_strncmp(data->env[i], var, var_len) == 0 && data->env[i][var_len] == '=')
+		if (ft_strncmp(data->env[i], var, var_len) == 0
+			&& data->env[i][var_len] == '=')
 		{
-			// Update existing variable
 			free(data->env[i]);
 			data->env[i] = ft_strdup(var);
-			return (data->env[i] ? 0 : 1);
+			if (data->env[i])
+				return (0);
+			return (1);
 		}
 		i++;
 	}
-	
-	// Variable doesn't exist, add it
 	return (add_env_variable(data, var));
+}
+
+static int	print_env_export(t_data *data)
+{
+	int		i;
+	char	*equal;
+
+	i = 0;
+	while (data->env && data->env[i])
+	{
+		equal = ft_strchr(data->env[i], '=');
+		if (equal)
+		{
+			*equal = '\0';
+			printf("declare -x %s=\"%s\"\n", data->env[i], equal + 1);
+			*equal = '=';
+		}
+		else
+			printf("declare -x %s\n", data->env[i]);
+		i++;
+	}
+	return (0);
 }
 
 int	ft_export(char **args, t_data *data)
@@ -91,29 +107,10 @@ int	ft_export(char **args, t_data *data)
 	int	i;
 	int	ret;
 
+	if (!args || !data)
+		return (1);
 	if (!args[1])
-	{
-		// Print environment variables
-		i = 0;
-		while (data->env[i])
-		{
-			// Format as "declare -x VAR=value"
-			char *equals = ft_strchr(data->env[i], '=');
-			if (equals)
-			{
-				*equals = '\0';
-				printf("declare -x %s=\"%s\"\n", data->env[i], equals + 1);
-				*equals = '=';
-			}
-			else
-			{
-				printf("declare -x %s\n", data->env[i]);
-			}
-			i++;
-		}
-		return (0);
-	}
-	
+		return (print_env_export(data));
 	ret = 0;
 	i = 1;
 	while (args[i])
@@ -125,12 +122,9 @@ int	ft_export(char **args, t_data *data)
 			ft_putstr_fd("': not a valid identifier\n", STDERR_FILENO);
 			ret = 1;
 		}
-		else if (ft_strchr(args[i], '='))
-		{
-			if (add_or_update_env_variable(data, args[i]) != 0)
-				ret = 1;
-		}
-		// If no '=', just validate but don't add/update (bash behavior)
+		else if (ft_strchr(args[i], '=') != NULL
+			&& add_or_update_env_variable(data, args[i]) != 0)
+			ret = 1;
 		i++;
 	}
 	return (ret);

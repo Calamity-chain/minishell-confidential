@@ -41,6 +41,7 @@ SRCS = \
 	free \
 	main \
 	signals \
+	signals_helpers \
 	commands/pwd \
 	commands/echo \
 	commands/exit \

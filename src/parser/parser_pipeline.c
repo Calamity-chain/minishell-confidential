@@ -14,59 +14,80 @@
 #include "../../include/parser.h"
 #include "../../include/minishell.h"
 
-t_command	*parse_pipeline(t_token *tok_head)
+static int	expect_cmd_after_pipe(t_token **tok)
 {
-	t_command	*pipeline_head;
-	t_command	*current_cmd;
-	t_token		*current_token;
-	t_command	*new_cmd;
-
-	pipeline_head = NULL;
-	current_cmd = NULL;
-	current_token = tok_head;
-	skip_spaces(&current_token);
-	if (!current_token || current_token->type == END_OF_FILE)
-		return (NULL);
-	if (is_pipe(current_token->type))
+	if (!*tok)
+		return (-1);
+	*tok = (*tok)->next;
+	skip_spaces(tok);
+	if (!*tok || (*tok)->type == END_OF_FILE || is_pipe((*tok)->type))
 	{
 		printf("syntax error near unexp. token `|`\n");
-		return (NULL);
+		return (-1);
 	}
-	while (current_token && current_token->type != END_OF_FILE)
+	return (0);
+}
+
+static void	append_cmd(t_command **head, t_command **tail, t_command *node)
+{
+	if (!*head)
+		*head = node;
+	else
+		(*tail)->next = node;
+	*tail = node;
+}
+
+static int	start_check(t_token **tok)
+{
+	skip_spaces(tok);
+	if (!*tok || (*tok)->type == END_OF_FILE)
+		return (-1);
+	if (is_pipe((*tok)->type))
 	{
-		new_cmd = parse_command(&current_token);
-		if (!new_cmd)
+		printf("syntax error near unexp. token `|`\n");
+		return (-1);
+	}
+	return (0);
+}
+
+static int	build_pipeline(t_token **tok, t_command **head, t_command **tail)
+{
+	t_command	*node;
+
+	while (*tok && (*tok)->type != END_OF_FILE)
+	{
+		node = parse_command(tok);
+		if (!node)
+			return (-1);
+		append_cmd(head, tail, node);
+		skip_spaces(tok);
+		if (*tok && is_pipe((*tok)->type))
 		{
-			free_pipeline(pipeline_head);
-			return (NULL);
-		}
-		if (!pipeline_head)
-			pipeline_head = new_cmd;
-		else
-			current_cmd->next = new_cmd;
-		current_cmd = new_cmd;
-		skip_spaces(&current_token);
-		if (current_token && is_pipe(current_token->type))
-		{
-			current_token = current_token->next;
-			skip_spaces(&current_token);
-			if (!current_token || current_token->type == END_OF_FILE 
-				|| is_pipe(current_token->type))
-			{
-				printf("syntax error near unexp. token `|`\n");
-				free_pipeline(pipeline_head);
-				return (NULL);
-			}
+			if (expect_cmd_after_pipe(tok) != 0)
+				return (-1);
 			continue ;
 		}
 		break ;
 	}
-	skip_spaces(&current_token);
-	if (current_token && current_token->type != END_OF_FILE)
-	{
-		printf("syntax error near unexp. token\n");
-		free_pipeline(pipeline_head);
+	return (0);
+}
+
+t_command	*parse_pipeline(t_token *tok_head)
+{
+	t_command	*head;
+	t_command	*tail;
+	t_token		*token;
+
+	head = NULL;
+	tail = NULL;
+	token = tok_head;
+	if (start_check(&token) != 0)
 		return (NULL);
-	}
-	return (pipeline_head);
+	if (build_pipeline(&token, &head, &tail) != 0)
+		return (free_pipeline(head), NULL);
+	skip_spaces(&token);
+	if (token && token->type != END_OF_FILE)
+		return (printf("syntax error near unexp. token\n"),
+			free_pipeline(head), NULL);
+	return (head);
 }

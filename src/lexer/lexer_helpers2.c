@@ -15,16 +15,16 @@
 
 int	ft_get_operator_length(const char *str)
 {
-	if (ft_strncmp(str, "<<", 2) == 0) 
+	if (ft_strncmp(str, "<<", 2) == 0)
 		return (2);
-	if (ft_strncmp(str, ">>", 2) == 0) 
+	if (ft_strncmp(str, ">>", 2) == 0)
 		return (2);
-	if (ft_strncmp(str, "||", 2) == 0) 
+	if (ft_strncmp(str, "||", 2) == 0)
 		return (2);
-	if (ft_strncmp(str, "&&", 2) == 0) 
+	if (ft_strncmp(str, "&&", 2) == 0)
 		return (2);
-	if (*str == '|' || *str == '<' || *str == '>' || 
-		*str == '(' || *str == ')') 
+	if (*str == '|' || *str == '<' || *str == '>'
+		|| *str == '(' || *str == ')')
 		return (1);
 	return (0);
 }
@@ -33,26 +33,26 @@ t_token_type	ft_get_operator_type(const char *str, int len)
 {
 	if (len == 2)
 	{
-		if (ft_strncmp(str, "<<", 2) == 0) 
+		if (ft_strncmp(str, "<<", 2) == 0)
 			return (HEREDOC);
-		if (ft_strncmp(str, ">>", 2) == 0) 
+		if (ft_strncmp(str, ">>", 2) == 0)
 			return (APPEND_OUT);
-		if (ft_strncmp(str, "||", 2) == 0) 
+		if (ft_strncmp(str, "||", 2) == 0)
 			return (ERROR);
-		if (ft_strncmp(str, "&&", 2) == 0) 
+		if (ft_strncmp(str, "&&", 2) == 0)
 			return (ERROR);
 	}
 	else if (len == 1)
 	{
-		if (*str == '|') 
+		if (*str == '|')
 			return (PIPE);
-		if (*str == '<') 
+		if (*str == '<')
 			return (REDIRECT_IN);
-		if (*str == '>') 
+		if (*str == '>')
 			return (REDIRECT_OUT);
-		if (*str == '(') 
+		if (*str == '(')
 			return (LPARENTHESIS);
-		if (*str == ')') 
+		if (*str == ')')
 			return (RPARENTHESIS);
 	}
 	return (ERROR);
@@ -102,15 +102,9 @@ int	emit_quoted(const char **cur, t_list **tokens)
 	if (len < 0)
 		return (ft_putstr_fd("minishell: syntax error: unclosed quote\n",
 				STDERR_FILENO), -1);
-	
-	// PRESERVE THE QUOTES - don't skip opening quote or remove closing quote
-	inner = *cur;  // Start from the opening quote (INCLUDING it)
-	// Use the full length including both quotes
-	
-	//if (!ft_append_token(tokens, STRING_LITERAL, (char *)inner, len)) //to include the quotes in the token value
+	inner = *cur;
 	if (!ft_append_token(tokens, STRING_LITERAL, (char *)inner + 1, len - 2))
 		return (-1);
-	
 	if (!set_last_quoted(*tokens, q))
 		return (-1);
 	*cur += len;

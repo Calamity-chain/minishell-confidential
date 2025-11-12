@@ -11,57 +11,61 @@
 /* ************************************************************************** */
 #include "../../include/minishell.h"
 
-static int	remove_env_variable(t_data *data, char *var)
+static int	count_env_and_found(t_data *data, const char *var,
+				size_t len, int *found)
 {
-	int		i;
-	int		j;
-	int		count;
-	char	**new_env;
-	int		found;
+	int	i;
 
-	if (!data || !data->env || !var)
-		return (0);  // Return 0 for "variable not found"
-	
-	// First, check if variable exists and count total variables
-	count = 0;
-	found = 0;
-	while (data->env[count])
-	{
-		if (ft_strncmp(data->env[count], var, ft_strlen(var)) == 0 
-			&& data->env[count][ft_strlen(var)] == '=')
-			found = 1;
-		count++;
-	}
-	
-	// If variable not found, return success
-	if (!found)
-		return (0);
-	
-	// Allocate new environment (size will be count, since we remove one)
-	new_env = malloc(sizeof(char *) * count);  // count, not count+1
-	if (!new_env)
-		return (1);
-	
-	// Copy all variables except the one to remove
+	*found = 0;
 	i = 0;
-	j = 0;
-	while (i < count)
+	while (data->env[i])
 	{
-		if (ft_strncmp(data->env[i], var, ft_strlen(var)) != 0 
-			|| data->env[i][ft_strlen(var)] != '=')
-		{
-			new_env[j] = data->env[i];  // Transfer ownership
-			j++;
-		}
-		else
-		{
-			free(data->env[i]);  // Free the removed variable
-		}
+		if (!ft_strncmp(data->env[i], var, len)
+			&& data->env[i][len] == '=')
+			*found = 1;
 		i++;
 	}
-	new_env[j] = NULL;
-	
-	// Free the old array (but NOT the strings - they're now in new_env)
+	return (i);
+}
+
+static int	copy_env_without_key(t_data *data, const char *var,
+				size_t len, char **dst)
+{
+	int	i;
+	int	j;
+
+	i = 0;
+	j = 0;
+	while (data->env[i])
+	{
+		if (!(!ft_strncmp(data->env[i], var, len)
+				&& data->env[i][len] == '='))
+			dst[j++] = data->env[i];
+		else
+			free(data->env[i]);
+		i++;
+	}
+	dst[j] = NULL;
+	return (j);
+}
+
+static int	remove_env_variable(t_data *data, char *var)
+{
+	int		n;
+	int		found;
+	size_t	len;
+	char	**new_env;
+
+	if (!data || !data->env || !var)
+		return (0);
+	len = ft_strlen(var);
+	n = count_env_and_found(data, var, len, &found);
+	if (!found)
+		return (0);
+	new_env = malloc(sizeof(char *) * (n + 1));
+	if (!new_env)
+		return (1);
+	copy_env_without_key(data, var, len, new_env);
 	free(data->env);
 	data->env = new_env;
 	return (0);
@@ -74,12 +78,10 @@ int	ft_unset(char **args, t_data *data)
 
 	if (!args[1])
 		return (0);
-	
 	ret = 0;
 	i = 1;
 	while (args[i])
 	{
-		// Only return error on actual failures, not "variable not found"
 		if (remove_env_variable(data, args[i]) != 0)
 			ret = 1;
 		i++;

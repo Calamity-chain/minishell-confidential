@@ -31,7 +31,7 @@ void	ft_free_token(void *token_ptr)
 	t_token	*token;
 
 	if (!token_ptr)
-		return;
+		return ;
 	token = (t_token *)token_ptr;
 	free(token->value);
 	token->value = NULL;
@@ -53,19 +53,14 @@ void	ft_free_matrix(char **matrix)
 	free(matrix);
 }
 
-//UPDATED WITH NEW ARCHITECTURE
-void free_command(t_command *cmd)
+void	free_command(t_command *cmd)
 {
-    if (!cmd)
-        return;
-    
-    if (cmd->args)
-        ft_free_matrix(cmd->args);
-    if (cmd->arg_quoted)
-        free(cmd->arg_quoted);
-    
-    // Free the redirection list
-    clear_redirections(&cmd->redirections);
-    
-    free(cmd);
+	if (!cmd)
+		return ;
+	if (cmd->args)
+		ft_free_matrix(cmd->args);
+	if (cmd->arg_quoted)
+		free(cmd->arg_quoted);
+	clear_redirections(&cmd->redirections);
+	free(cmd);
 }

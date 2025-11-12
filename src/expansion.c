@@ -149,6 +149,8 @@ void	handle_env(t_data *data, t_command *command, int *ac, t_token *token)
 
     (void)command;
     (void)ac;
+	if (!token || !token->value) 
+		return ;
     expanded_value = expand_env_variable(data, token->value);
     if (!expanded_value)
         return ;

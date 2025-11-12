@@ -12,10 +12,6 @@
 
 #include "../../include/minishell.h"
 
-/**
- * @brief Built-in `pwd` command: prints the current working directory.
- * @return 0 on success, 1 on error.
- */
 int	ft_pwd(void)
 {
 	char	*cwd;
@@ -30,4 +26,3 @@ int	ft_pwd(void)
 	free(cwd);
 	return (0);
 }
-

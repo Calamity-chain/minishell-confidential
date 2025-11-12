@@ -29,9 +29,9 @@ RED="\e[0;31m"
 END="\033[0m"
 
 chmod 000 ./test_files/invalid_permission
-mkdir ./outfiles
-mkdir ./mini_outfiles
-mkdir ./bash_outfiles
+mkdir -p ./outfiles
+mkdir -p ./mini_outfiles
+mkdir -p ./bash_outfiles
 
 printf $RED
 echo "🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥";
@@ -46,6 +46,12 @@ echo "🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥�
 echo "                                                                                              ";
 
 PROMPT=$(echo -e "\nexit\n" | $MINISHELL_PATH | head -n 1 | sed "s/\x1B\[[0-9;]\{1,\}[A-Za-z]//g" )
+# If minishell doesn't print a prompt on non-TTY stdin, avoid stripping all lines
+if [[ -n "$PROMPT" ]]; then
+	GREP_PROMPT=(grep -vF "$PROMPT")
+else
+	GREP_PROMPT=(cat)
+fi
 # Helper commands:
 REMOVE_COLORS="sed s/\x1B\[[0-9;]\{1,\}[A-Za-z]//g"
 REMOVE_EXIT="grep -v ^exit$"
@@ -60,9 +66,9 @@ for testfile in ${test_lists[*]}; do
 
 		rm -rf ./outfiles/*
 		rm -rf ./mini_outfiles/*
-		MINI_OUTPUT=$(echo -e "$teste" | $MINISHELL_PATH 2> /dev/null | $REMOVE_COLORS | grep -vF "$PROMPT" | $REMOVE_EXIT )
+	MINI_OUTPUT=$(echo -e "$teste" | $MINISHELL_PATH 2> /dev/null | $REMOVE_COLORS | "${GREP_PROMPT[@]}" | $REMOVE_EXIT )
 		MINI_OUTFILES=$(cp ./outfiles/* ./mini_outfiles &>/dev/null)
-		MINI_EXIT_CODE=$(echo -e "$MINISHELL_PATH\n$teste\necho \$?\nexit\n" | bash 2> /dev/null | $REMOVE_COLORS | grep -vF "$PROMPT" | $REMOVE_EXIT | tail -n 1)
+	MINI_EXIT_CODE=$(echo -e "$MINISHELL_PATH\n$teste\necho \$?\nexit\n" | bash 2> /dev/null | $REMOVE_COLORS | "${GREP_PROMPT[@]}" | $REMOVE_EXIT | tail -n 1)
 		MINI_ERROR_MSG=$(trap "" PIPE && echo "$teste" | $MINISHELL_PATH 2>&1 > /dev/null | grep -o '[^:]*$' )
 
 		rm -rf ./outfiles/*

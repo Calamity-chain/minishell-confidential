@@ -21,42 +21,15 @@ static char	*process_redirection_filename(const char *filename)
 
 	if (!filename)
 		return (NULL);
-	
 	len = ft_strlen(filename);
 	if (len < 2)
 		return (ft_strdup(filename));
-	
 	first_char = filename[0];
-	
-	// Remove surrounding quotes if present
-	if ((first_char == '\'' || first_char == '"') && 
-		filename[len - 1] == first_char)
-	{
+	if ((first_char == '\'' || first_char == '"')
+		&& filename[len - 1] == first_char)
 		return (ft_substr(filename, 1, len - 2));
-	}
-	
 	return (ft_strdup(filename));
 }
-
-/* REMOVED WITH NEW ARCHITECTURE IMPLEMENTATION
-static int	assign_target(char **dst, const char *src)
-{
-	char	*processed;
-	char	*dup;
-
-	processed = process_redirection_filename(src);
-	if (!processed)
-		return (-1);
-		
-	dup = ft_strdup(processed);
-	free(processed);
-	
-	if (!dup)
-		return (-1);
-	free(*dst);
-	*dst = dup;
-	return (0);
-}*/
 
 static void	print_syntax_error(const char *token)
 {
@@ -64,53 +37,41 @@ static void	print_syntax_error(const char *token)
 		token = "newline";
 	printf("syntax error near unexp. token `%s`\n", token);
 }
-/**
- * @brief Concatenate adjacent string tokens for redirection filenames
- */
+
 static char	*concatenate_adjacent_tokens(t_token **token)
 {
 	char	*result;
 	char	*temp;
 	t_token	*current;
+	char	*processed;
 
 	if (!token || !*token)
 		return (NULL);
-	
 	current = *token;
 	result = ft_strdup("");
 	if (!result)
 		return (NULL);
-	
-	// Concatenate all adjacent WORD, STRING_LITERAL, and ENV_VAR tokens
-	while (current && (current->type == WORD || current->type == STRING_LITERAL || current->type == ENV_VAR))
+	while (current && (current->type == WORD
+			|| current->type == STRING_LITERAL || current->type == ENV_VAR))
 	{
-		// Process each token (remove quotes if needed)
-		char *processed = process_redirection_filename(current->value);
+		processed = process_redirection_filename(current->value);
 		if (!processed)
 		{
 			free(result);
 			return (NULL);
 		}
-		
-		// Concatenate with previous result
 		temp = ft_strjoin(result, processed);
 		free(result);
 		free(processed);
-		
 		if (!temp)
 			return (NULL);
-		
 		result = temp;
 		current = current->next;
 	}
-	
-	// Update the token pointer to point to the next non-filename token
 	*token = current;
-	
 	return (result);
 }
 
-//UPDATED WITH NEW ARCHITECTURE
 int	parse_redirection(t_token **current, t_command *cmd)
 {
 	t_token			*token;
@@ -132,8 +93,8 @@ int	parse_redirection(t_token **current, t_command *cmd)
 	redir_type = token->type;
 	token = token->next;
 	skip_spaces(&token);
-	if (!token || (token->type != WORD 
-			&& token->type != STRING_LITERAL 
+	if (!token || (token->type != WORD
+			&& token->type != STRING_LITERAL
 			&& token->type != ENV_VAR))
 	{
 		bad = NULL;
@@ -142,31 +103,22 @@ int	parse_redirection(t_token **current, t_command *cmd)
 		print_syntax_error(bad);
 		return (-1);
 	}
-
-	// NEW: Concatenate adjacent string tokens for the filename
 	full_filename = concatenate_adjacent_tokens(&token);
-	
 	if (!full_filename)
 		return (-1);
-
-	// Create new redirection (we use the processed filename directly)
-	new_redir = create_redirection(full_filename, redir_type, 
+	new_redir = create_redirection(full_filename, redir_type,
 								  (redir_type == APPEND_OUT) ? 1 : 0,
 								  (redir_type == HEREDOC && token && token->type == STRING_LITERAL) ? 1 : 0);
-	
 	if (!new_redir)
 	{
 		free(full_filename);
 		return (-1);
 	}
-	
-	// Add to redirection list
 	if (add_redirection(&cmd->redirections, new_redir) != 0)
 	{
 		free_redirection(new_redir);
 		return (-1);
 	}
-	
 	*current = token;
 	return (0);
 }
