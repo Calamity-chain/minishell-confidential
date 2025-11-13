@@ -18,7 +18,7 @@
 # include <stdlib.h>
 # include <unistd.h>
 
-/* Macros */ 
+/* Macros */
 # define MAX_PFD 1024
 # define LINE_SIZE 128
 

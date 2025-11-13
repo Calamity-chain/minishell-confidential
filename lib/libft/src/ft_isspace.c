@@ -13,8 +13,8 @@
 /** Checks if a character is a whitespace. */
 int	ft_isspace(int c)
 {
-	if (c == ' ' || c == '\t' || c == '\n' || c == '\v' || c == '\f' ||
-        c == '\r')
+	if (c == ' ' || c == '\t' || c == '\n' || c == '\v'
+		|| c == '\f' || c == '\r')
 		return (1);
 	return (0);
 }

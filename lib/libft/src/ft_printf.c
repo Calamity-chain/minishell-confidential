@@ -20,8 +20,8 @@ static int	ft_print_ptr(va_list args, char *hex_base)
 	ptr = va_arg(args, void *);
 	if (!ptr)
 		return (ft_putstr_fd("(nil)", 1));
-	return (ft_putstr_fd("0x", 1) \
-			+ ft_putnbr_base_fd((unsigned long)ptr, 1, hex_base));
+	return (ft_putstr_fd("0x", 1)
+		+ ft_putnbr_base_fd((unsigned long)ptr, 1, hex_base));
 }
 
 /* Prints to screen the current variable, returns the n_chars printed */
