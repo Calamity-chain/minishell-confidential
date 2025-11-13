@@ -13,33 +13,40 @@
 #include "../../include/minishell.h"
 #include <limits.h>
 
-/**
- * @brief Check if string is numeric, handling quotes and signs
- */
+static char	*strip_quotes(const char *s)
+{
+	size_t	i;
+	size_t	j;
+	char	*out;
+
+	if (!s)
+		return (NULL);
+	out = malloc(ft_strlen(s) + 1);
+	if (!out)
+		return (NULL);
+	i = 0;
+	j = 0;
+	while (s[i])
+	{
+		if (s[i] != '\'' && s[i] != '"')
+			out[j++] = s[i];
+		i++;
+	}
+	out[j] = '\0';
+	return (out);
+}
+
 static int	is_numeric(const char *str)
 {
-	int	i;
-	int	has_digits;
+	int		i;
+	int		has_digits;
 	char	*clean;
-	int	j;
 
 	if (!str || !*str)
 		return (0);
-	
-	// Remove all quotes
-	clean = malloc(ft_strlen(str) + 1);
+	clean = strip_quotes(str);
 	if (!clean)
 		return (0);
-	i = 0;
-	j = 0;
-	while (str[i])
-	{
-		if (str[i] != '"' && str[i] != '\'')
-			clean[j++] = str[i];
-		i++;
-	}
-	clean[j] = '\0';
-
 	i = 0;
 	if (clean[i] == '-' || clean[i] == '+')
 		i++;
@@ -47,52 +54,16 @@ static int	is_numeric(const char *str)
 	while (clean[i])
 	{
 		if (!ft_isdigit((unsigned char)clean[i]))
-		{
-			free(clean);
-			return (0);
-		}
+			return (free(clean), 0);
 		has_digits = 1;
 		i++;
 	}
-	free(clean);
-	return (has_digits);
+	return (free(clean), has_digits);
 }
 
-/**
- * @brief Remove quotes from a string for exit code calculation
- */
 static char	*remove_quotes_for_exit(const char *str)
 {
-	int		i;
-	int		j;
-	char	*result;
-	int		in_quotes;
-	char	quote_char;
-
-	if (!str)
-		return (NULL);
-	result = malloc(ft_strlen(str) + 1);
-	if (!result)
-		return (NULL);
-	i = 0;
-	j = 0;
-	in_quotes = 0;
-	quote_char = 0;
-	while (str[i])
-	{
-		if (!in_quotes && (str[i] == '"' || str[i] == '\''))
-		{
-			in_quotes = 1;
-			quote_char = str[i];
-		}
-		else if (in_quotes && str[i] == quote_char)
-			in_quotes = 0;
-		else
-			result[j++] = str[i];
-		i++;
-	}
-	result[j] = '\0';
-	return (result);
+	return (strip_quotes(str));
 }
 
 static void	print_exit_line(void)
@@ -100,49 +71,31 @@ static void	print_exit_line(void)
 	ft_putendl_fd("exit", STDOUT_FILENO);
 }
 
-/**
- * @brief Built-in `exit`
- */
 int	ft_exit(char **args)
 {
 	long	exit_code;
 	char	*clean_arg;
-	
-	// Check for too many arguments
+
 	if (args[1] && args[2])
-	{
-		ft_putstr_fd("minishell: exit: too many arguments\n", STDERR_FILENO);
-		return (1);  // Don't exit, just return error
-	}
+		return (ft_putstr_fd("minishell: exit: too many arguments\n", 2), 1);
 	if (!args[1])
-	{
-		print_exit_line();
-		exit(0);
-	}
+		return (print_exit_line(), exit(0), 0);
 	if (!is_numeric(args[1]))
 	{
 		print_exit_line();
-		ft_putstr_fd("minishell: exit: ", STDERR_FILENO);
-		ft_putstr_fd(args[1], STDERR_FILENO);
-		ft_putstr_fd(": numeric argument required\n", STDERR_FILENO);
+		ft_putstr_fd("minishell: exit: ", 2);
+		ft_putstr_fd(args[1], 2);
+		ft_putstr_fd(": numeric argument required\n", 2);
 		exit(2);
 	}
-	
-	// Remove quotes before conversion
 	clean_arg = remove_quotes_for_exit(args[1]);
 	if (!clean_arg)
-	{
-		print_exit_line();
-		exit(1);
-	}
+		return (print_exit_line(), exit(1), 0);
 	exit_code = ft_atoi(clean_arg);
 	free(clean_arg);
-	
-	// Handle exit codes modulo 256
-	exit_code = exit_code % 256;
+	exit_code %= 256;
 	if (exit_code < 0)
 		exit_code += 256;
-	
 	print_exit_line();
 	exit((unsigned char)exit_code);
 }

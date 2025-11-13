@@ -85,17 +85,23 @@ int	get_exit_status(int status)
 	return (1);
 }
 
-void	free_split(char **split)
+int	is_builtin(char *cmd)
 {
-	int	i;
-
-	if (!split)
-		return ;
-	i = 0;
-	while (split[i])
-	{
-		free(split[i]);
-		i++;
-	}
-	free(split);
+	if (!cmd)
+		return (0);
+	if (ft_strncmp(cmd, "echo", 5) == 0)
+		return (1);
+	if (ft_strncmp(cmd, "cd", 3) == 0)
+		return (1);
+	if (ft_strncmp(cmd, "pwd", 4) == 0)
+		return (1);
+	if (ft_strncmp(cmd, "export", 7) == 0)
+		return (1);
+	if (ft_strncmp(cmd, "unset", 6) == 0)
+		return (1);
+	if (ft_strncmp(cmd, "env", 4) == 0)
+		return (1);
+	if (ft_strncmp(cmd, "exit", 5) == 0)
+		return (1);
+	return (0);
 }

@@ -47,6 +47,13 @@ typedef struct s_pipe_state
 	int		pipefd[2];
 }	t_pipe_state;
 
+typedef struct s_pipe_exec
+{
+	int		in_fd;
+	int		pipefd[2];
+	pid_t	last_pid;
+}	t_pipe_exec;
+
 /* expansion */
 char	*handle_quoted_env(t_data *data, t_token *token, char **quoted_string);
 void	handle_env(t_data *data, t_command *command, int *ac, t_token *token);
@@ -83,6 +90,7 @@ void	free_pipeline(t_command *head);
 void	ft_free_token(void *token_ptr);
 void	ft_free_matrix(char **matrix);
 void	free_command(t_command *cmd);
+void	free_split(char **split);
 
 /* executor */
 int		execute_command(t_command *cmd, t_data *data);
@@ -91,7 +99,18 @@ char	*ft_getenv_from_envp(char **env, const char *name);
 char	*build_full_path(char *dir, char *cmd);
 void	command_not_found_error(char *cmd);
 int		get_exit_status(int status);
-void	free_split(char **split);
+int		add_env_variable(t_data *data, char *var, char *value);
+int		update_env_variable(t_data *data, char *var, char *value);
+char	*get_home_path(t_data *data);
+char	*get_oldpwd_path(t_data *data);
+int		is_builtin(char *cmd);
+int		execute_builtin(t_command *cmd, t_data *data);
+void	execute_external(t_command *cmd, t_data *data);
+void	expand_command_args(t_command *cmd, t_data *data);
+char	*remove_outer_quotes(char *str);
+void	shift_arguments_left(t_command *cmd);
+int		expand_command_name(t_command *cmd, t_data *data);
+char	*find_command_path(char *cmd, char **env);
 
 /* redirections */
 void	restore_fds(int stdin_fd, int stdout_fd);
@@ -102,5 +121,7 @@ void	setup_child_signals(void);
 char	*expand_heredoc_line(char *line, t_data *data);
 int		setup_redirections_with_data(t_command *cmd, t_data *data);
 int		handle_heredoc(char *delimiter, int quoted, t_data *data);
+int		handle_input_redirection(char *filename);
+int		handle_output_redirection(char *filename, int append_mode);
 
 #endif

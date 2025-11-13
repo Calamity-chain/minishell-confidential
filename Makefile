@@ -38,18 +38,24 @@ SRCS = \
     	executor/executor_helpers \
     	executor/redirections \
     	executor/redirection_list \
+	executor/redirections_helpers \
+	executor/redirections_helpers2 \
     	executor/pipes \
-	expansion \
-	expansion_helper \
-	expansion_helper2 \
+	executor/execute_pipelines \
+	executor/executor_helpers2 \
+	executor/executor_helpers3 \
+	expansion/expansion \
+	expansion/expansion_helper \
+	expansion/expansion_helper2 \
 	free \
 	main \
-	signals \
-	signals_helpers \
+	signals/signals \
+	signals/signals_helpers \
 	commands/pwd \
 	commands/echo \
 	commands/exit \
 	commands/cd \
+	commands/cd_helpers \
     	commands/export \
     	commands/unset \
     	commands/env

@@ -14,23 +14,6 @@
 #include "../../include/parser.h"
 #include "../../include/minishell.h"
 
-static char	*remove_outer_quotes(const char *str)
-{
-	char	*result;
-	size_t	len;
-	char	first_char;
-
-	if (!str || ft_strlen(str) < 2)
-		return (ft_strdup(str));
-	first_char = str[0];
-	len = ft_strlen(str);
-	if ((first_char == '\'' || first_char == '"') && str[len - 1] == first_char)
-		result = ft_substr(str, 1, len - 2);
-	else
-		result = ft_strdup(str);
-	return (result);
-}
-
 char	*join_segments(char *acc, const char *segment)
 {
 	char	*res;

@@ -9,207 +9,107 @@
 /*   Updated: 2025/10/14 19:44:49 by ltoscani         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
 #include "../../include/minishell.h"
 #include "../../include/parser.h"
 
-int	handle_input_redirection(char *filename)
-{
-	int	fd;
+#include "../../include/minishell.h"
+#include "../../include/parser.h"
 
-	if (!filename)
-		return (-1);
-	fd = open(filename, O_RDONLY);
-	if (fd == -1)
-	{
-		ft_putstr_fd("minishell: ", STDERR_FILENO);
-		ft_putstr_fd(filename, STDERR_FILENO);
-		ft_putstr_fd(": No such file or directory\n", STDERR_FILENO);
-		return (-1);
-	}
-	if (dup2(fd, STDIN_FILENO) == -1)
-	{
-		perror("dup2");
-		close(fd);
-		return (-1);
-	}
-	close(fd);
-	return (0);
-}
-
-int	handle_output_redirection(char *filename, int append_mode)
+static int	check_output_perm(t_redirection *redir)
 {
-	int	fd;
 	int	flags;
-	
-	if (!filename)
-		return (-1);
+	int	fd;
+
 	flags = O_WRONLY | O_CREAT;
-	if (append_mode)
+	if (redir->append_mode)
 		flags |= O_APPEND;
 	else
 		flags |= O_TRUNC;
-	fd = open(filename, flags, 0644);
+	fd = open(redir->filename, flags, 0644);
 	if (fd == -1)
 	{
 		ft_putstr_fd("minishell: ", STDERR_FILENO);
-		ft_putstr_fd(filename, STDERR_FILENO);
+		ft_putstr_fd(redir->filename, STDERR_FILENO);
 		ft_putstr_fd(": Permission denied\n", STDERR_FILENO);
-		return (-1);
-	}
-	if (dup2(fd, STDOUT_FILENO) == -1)
-	{
-		perror("dup2");
-		close(fd);
-		return (-1);
+		return (1);
 	}
 	close(fd);
 	return (0);
 }
 
-int	handle_heredoc(char *delimiter, int quoted, t_data *data)
+static int	check_redir_permissions(t_redirection *redir)
 {
-	int		pipefd[2];
-	char	*line;
-	char	*expanded_line;
-
-	if (pipe(pipefd) == -1)
-		return (perror("pipe"), -1);
-	
-	while (1)
+	while (redir)
 	{
-		line = readline("> ");
-		if (!line)
+		if ((redir->type == REDIRECT_IN || redir->type == HEREDOC)
+			&& access(redir->filename, F_OK) == -1)
 		{
-			printf("minishell: warning: here-document delimited by end-of-file (wanted `%s')\n", delimiter);
-			break ;
+			ft_putstr_fd("minishell: ", STDERR_FILENO);
+			ft_putstr_fd(redir->filename, STDERR_FILENO);
+			ft_putstr_fd(": No such file or directory\n", STDERR_FILENO);
+			return (1);
 		}
-		if (ft_strncmp(line, delimiter, ft_strlen(delimiter) + 1) == 0)
-		{
-			free(line);
-			break ;
-		}
-		
-		if (!quoted)
-		{
-			expanded_line = expand_heredoc_line(line, data);
-			free(line);
-			line = expanded_line;
-		}
-		
-		if (line)
-		{
-			write(pipefd[1], line, ft_strlen(line));
-			write(pipefd[1], "\n", 1);
-			free(line);
-		}
+		if (redir->type == REDIRECT_OUT || redir->type == APPEND_OUT)
+			if (check_output_perm(redir) != 0)
+				return (1);
+		redir = redir->next;
 	}
-	
-	close(pipefd[1]);
-	if (dup2(pipefd[0], STDIN_FILENO) == -1)
-		return (close(pipefd[0]), -1);
-	close(pipefd[0]);
 	return (0);
 }
 
-int setup_redirections_with_data(t_command *cmd, t_data *data)
+static t_redirection	*find_last_input(t_redirection *redir)
 {
-    t_redirection *redir;
-    int result;
+	t_redirection	*last;
 
-    // First pass: Validate all redirections
-    redir = cmd->redirections;
-    while (redir)
-    {
-        // Check input file existence
-        if ((redir->type == REDIRECT_IN || redir->type == HEREDOC) && 
-            access(redir->filename, F_OK) == -1)
-        {
-            ft_putstr_fd("minishell: ", STDERR_FILENO);
-            ft_putstr_fd(redir->filename, STDERR_FILENO);
-            ft_putstr_fd(": No such file or directory\n", STDERR_FILENO);
-            return (1);
-        }
-        
-        // Check output file permissions (try to create/open)
-        if ((redir->type == REDIRECT_OUT || redir->type == APPEND_OUT))
-        {
-            int flags = O_WRONLY | O_CREAT | (redir->append_mode ? O_APPEND : O_TRUNC);
-            int test_fd = open(redir->filename, flags, 0644);
-            if (test_fd == -1)
-            {
-                ft_putstr_fd("minishell: ", STDERR_FILENO);
-                ft_putstr_fd(redir->filename, STDERR_FILENO);
-                ft_putstr_fd(": Permission denied\n", STDERR_FILENO);
-                return (1);
-            }
-            close(test_fd);
-        }
-        redir = redir->next;
-    }
-
-    // Second pass: Apply redirections (last one of each type wins)
-    int input_applied = 0;
-    int output_applied = 0;
-    
-    redir = cmd->redirections;
-    while (redir)
-    {
-        // Apply the LAST input redirection
-        if ((redir->type == REDIRECT_IN || redir->type == HEREDOC) && !input_applied)
-        {
-            // Walk to find the last input redirection
-            t_redirection *last_input = redir;
-            t_redirection *temp = redir->next;
-            while (temp)
-            {
-                if (temp->type == REDIRECT_IN || temp->type == HEREDOC)
-                    last_input = temp;
-                temp = temp->next;
-            }
-            
-            // Apply the last input redirection
-            if (last_input->type == HEREDOC)
-                result = handle_heredoc(last_input->filename, last_input->heredoc_quoted, data);
-            else
-                result = handle_input_redirection(last_input->filename);
-            
-            if (result != 0)
-                return (1);
-            
-            input_applied = 1;
-        }
-        
-        // Apply the LAST output redirection  
-        if ((redir->type == REDIRECT_OUT || redir->type == APPEND_OUT) && !output_applied)
-        {
-            // Walk to find the last output redirection
-            t_redirection *last_output = redir;
-            t_redirection *temp = redir->next;
-            while (temp)
-            {
-                if (temp->type == REDIRECT_OUT || temp->type == APPEND_OUT)
-                    last_output = temp;
-                temp = temp->next;
-            }
-            
-            // Apply the last output redirection
-            result = handle_output_redirection(last_output->filename, last_output->append_mode);
-            if (result != 0)
-                return (1);
-            
-            output_applied = 1;
-        }
-        
-        redir = redir->next;
-    }
-    
-    return (0);
+	last = NULL;
+	while (redir)
+	{
+		if (redir->type == REDIRECT_IN || redir->type == HEREDOC)
+			last = redir;
+		redir = redir->next;
+	}
+	return (last);
 }
 
-void	restore_fds(int stdin_fd, int stdout_fd)
+static t_redirection	*find_last_output(t_redirection *redir)
 {
-	dup2(stdin_fd, STDIN_FILENO);
-	dup2(stdout_fd, STDOUT_FILENO);
-	close(stdin_fd);
-	close(stdout_fd);
+	t_redirection	*last;
+
+	last = NULL;
+	while (redir)
+	{
+		if (redir->type == REDIRECT_OUT || redir->type == APPEND_OUT)
+			last = redir;
+		redir = redir->next;
+	}
+	return (last);
+}
+
+int	setup_redirections_with_data(t_command *cmd, t_data *data)
+{
+	t_redirection	*last_in;
+	t_redirection	*last_out;
+
+	if (!cmd)
+		return (1);
+	if (check_redir_permissions(cmd->redirections) != 0)
+		return (1);
+	last_in = find_last_input(cmd->redirections);
+	if (last_in)
+	{
+		if (last_in->type == HEREDOC)
+		{
+			if (handle_heredoc(last_in->filename,
+					last_in->heredoc_quoted, data) != 0)
+				return (1);
+		}
+		else if (handle_input_redirection(last_in->filename) != 0)
+			return (1);
+	}
+	last_out = find_last_output(cmd->redirections);
+	if (last_out && handle_output_redirection(last_out->filename,
+			last_out->append_mode) != 0)
+		return (1);
+	return (0);
 }
