@@ -39,6 +39,8 @@ typedef struct s_data
 {
 	char	**env;
 	int		exit_status;
+	int		need_newline;
+
 }	t_data;
 
 typedef struct s_pipe_state

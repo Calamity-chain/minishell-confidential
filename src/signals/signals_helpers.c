@@ -17,7 +17,9 @@ void	ft_handle_sigint(int signo)
 	(void)signo;
 	g_signal_received = SIGINT;
 	write(1, "\n", 1);
+	rl_replace_line("", 0);
 	rl_on_new_line();
+	rl_redisplay();
 }
 
 void	ft_handle_sigquit(int signo)
