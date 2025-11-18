@@ -42,7 +42,7 @@ static int	check_redir_permissions(t_redirection *redir)
 {
 	while (redir)
 	{
-		if ((redir->type == REDIRECT_IN || redir->type == HEREDOC)
+		if (redir->type == REDIRECT_IN
 			&& access(redir->filename, F_OK) == -1)
 		{
 			ft_putstr_fd("minishell: ", STDERR_FILENO);
