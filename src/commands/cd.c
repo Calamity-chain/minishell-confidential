@@ -26,17 +26,6 @@ static int	check_cd_args(char **args)
 	arg_count = 0;
 	while (args[arg_count])
 		arg_count++;
-	if (arg_count == 2)
-	{
-		if (args[1]
-			&& (args[1][0] == '/' || ft_strchr(args[1], '$')
-			|| ft_strchr(args[1], '~')))
-		{
-			ft_putstr_fd("minishell: cd: too many arguments\n",
-				STDERR_FILENO);
-			return (1);
-		}
-	}
 	if (arg_count > 2)
 	{
 		ft_putstr_fd("minishell: cd: too many arguments\n",
