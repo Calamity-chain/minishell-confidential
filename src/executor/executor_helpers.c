@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   executor_helpers.c                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ltoscani <ltoscani@student.42berlin.d      +#+  +:+       +#+        */
+/*   By: asalniko <asalniko@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/10/14 19:50:46 by ltoscani          #+#    #+#             */
-/*   Updated: 2025/10/14 19:50:58 by ltoscani         ###   ########.fr       */
+/*   Updated: 2025/11/24 22:16:44 by asalniko         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 

@@ -6,7 +6,7 @@
 /*   By: asalniko <asalniko@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/19 14:38:51 by ltoscani          #+#    #+#             */
-/*   Updated: 2025/10/10 00:40:39 by asalniko         ###   ########.fr       */
+/*   Updated: 2025/11/24 21:12:44 by asalniko         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,6 +28,7 @@
 # include <term.h>
 # include <readline/readline.h>
 # include <readline/history.h>
+# include <errno.h>
 
 # include "libft.h"
 # include "lexer.h"
@@ -40,7 +41,7 @@ typedef struct s_data
 	char	**env;
 	int		exit_status;
 	int		need_newline;
-
+	int		should_exit;
 }	t_data;
 
 typedef struct s_pipe_state
@@ -74,7 +75,7 @@ char	*expand_with_quotes(t_data *data, const char *str,
 /* builtins */
 int		ft_pwd(void);
 int		ft_echo(char **args);
-int		ft_exit(char **args);
+int		ft_exit(char **args, t_data *data);
 int		ft_cd(char **args, t_data *data);
 int		ft_export(char **args, t_data *data);
 int		ft_unset(char **args, t_data *data);
@@ -93,6 +94,7 @@ void	ft_free_token(void *token_ptr);
 void	ft_free_matrix(char **matrix);
 void	free_command(t_command *cmd);
 void	free_split(char **split);
+void	free_env_copy(char **env);
 
 /* executor */
 int		execute_command(t_command *cmd, t_data *data);
@@ -113,6 +115,16 @@ char	*remove_outer_quotes(char *str);
 void	shift_arguments_left(t_command *cmd);
 int		expand_command_name(t_command *cmd, t_data *data);
 char	*find_command_path(char *cmd, char **env);
+int		exit_too_many_args(t_data *data);
+int		exit_no_args(t_data *data);
+int		exit_non_numeric(char *arg, t_data *data);
+int		exit_with_code(char *arg, t_data *data);
+char	*remove_quotes_for_exit(const char *str);
+void	handle_execve_error(char *cmd);
+int	run_command_after_redirs(t_command *cmd, t_data *data,
+			int in_backup, int out_backup);
+int	launch_child(t_command *cmd, t_data *data,
+				int in_backup, int out_backup);
 
 /* redirections */
 void	restore_fds(int stdin_fd, int stdout_fd);

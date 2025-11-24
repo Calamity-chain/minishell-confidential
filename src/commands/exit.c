@@ -61,41 +61,18 @@ static int	is_numeric(const char *str)
 	return (free(clean), has_digits);
 }
 
-static char	*remove_quotes_for_exit(const char *str)
+char	*remove_quotes_for_exit(const char *str)
 {
 	return (strip_quotes(str));
 }
 
-static void	print_exit_line(void)
+int	ft_exit(char **args, t_data *data)
 {
-	ft_putendl_fd("exit", STDOUT_FILENO);
-}
-
-int	ft_exit(char **args)
-{
-	long	exit_code;
-	char	*clean_arg;
-
 	if (args[1] && args[2])
-		return (ft_putstr_fd("minishell: exit: too many arguments\n", 2), 1);
+		return (exit_too_many_args(data));
 	if (!args[1])
-		return (print_exit_line(), exit(0), 0);
+		return (exit_no_args(data));
 	if (!is_numeric(args[1]))
-	{
-		print_exit_line();
-		ft_putstr_fd("minishell: exit: ", 2);
-		ft_putstr_fd(args[1], 2);
-		ft_putstr_fd(": numeric argument required\n", 2);
-		exit(2);
-	}
-	clean_arg = remove_quotes_for_exit(args[1]);
-	if (!clean_arg)
-		return (print_exit_line(), exit(1), 0);
-	exit_code = ft_atoi(clean_arg);
-	free(clean_arg);
-	exit_code %= 256;
-	if (exit_code < 0)
-		exit_code += 256;
-	print_exit_line();
-	exit((unsigned char)exit_code);
+		return (exit_non_numeric(args[1], data));
+	return (exit_with_code(args[1], data));
 }

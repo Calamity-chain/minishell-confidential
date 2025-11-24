@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   executor_helpers3.c                                :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asalniko <asalniko@student.42berlin.d      +#+  +:+       +#+        */
+/*   By: asalniko <asalniko@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/15 16:59:23 by asalniko          #+#    #+#             */
-/*   Updated: 2025/11/15 16:59:25 by asalniko         ###   ########.fr       */
+/*   Updated: 2025/11/24 23:03:48 by asalniko         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 

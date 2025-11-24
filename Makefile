@@ -12,7 +12,7 @@
 
 NAME = minishell
 
-CC = cc
+CC = cc -g
 CFLAGS = -Wall -Wextra -Werror -Iinclude -I$(LIBFT_DIR)/include
 LDFLAGS = -L$(LIBFT_DIR) -lft -lreadline
 
@@ -44,10 +44,12 @@ SRCS = \
 	executor/execute_pipelines \
 	executor/executor_helpers2 \
 	executor/executor_helpers3 \
+	executor/executor_helpers4 \
 	expansion/expansion \
 	expansion/expansion_helper \
 	expansion/expansion_helper2 \
 	free \
+	free2 \
 	main \
 	signals/signals \
 	signals/signals_helpers \
@@ -58,7 +60,9 @@ SRCS = \
 	commands/cd_helpers \
     	commands/export \
     	commands/unset \
-    	commands/env
+    	commands/env \
+    	commands/exit_helpers \
+    	
 SRCS := $(addsuffix .c, $(addprefix $(SRC_DIR)/, ${SRCS}))
 OBJS = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRCS))
 

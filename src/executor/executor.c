@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   executor.c                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ltoscani <ltoscani@student.42berlin.d      +#+  +:+       +#+        */
+/*   By: asalniko <asalniko@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/10/14 19:43:55 by ltoscani          #+#    #+#             */
-/*   Updated: 2025/10/14 19:50:40 by ltoscani         ###   ########.fr       */
+/*   Updated: 2025/11/24 23:08:00 by asalniko         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,7 +36,7 @@ static int	setup_stdio_and_redirs(t_command *cmd, t_data *data,
 	return (0);
 }
 
-static int	launch_child(t_command *cmd, t_data *data,
+int	launch_child(t_command *cmd, t_data *data,
 				int in_backup, int out_backup)
 {
 	pid_t	pid;
@@ -114,22 +114,19 @@ int	execute_command(t_command *cmd, t_data *data)
 {
 	int	in_backup;
 	int	out_backup;
-	int	exit_status;
 
 	if (!cmd || !cmd->args || !cmd->args[0])
 		return (0);
 	expand_command_args(cmd, data);
 	if (!cmd->args || !cmd->args[0] || cmd->args[0][0] == '\0')
-		return (0);
-	if (setup_stdio_and_redirs(cmd, data, &in_backup, &out_backup) != 0)
-		return (1);
-	if (is_builtin(cmd->args[0]))
 	{
-		exit_status = execute_builtin(cmd, data);
-		restore_fds(in_backup, out_backup);
-		data->exit_status = exit_status;
-		return (exit_status);
+		data->exit_status = 0;
+		return (0);
 	}
-	exit_status = launch_child(cmd, data, in_backup, out_backup);
-	return (exit_status);
+	if (setup_stdio_and_redirs(cmd, data, &in_backup, &out_backup) != 0)
+	{
+		data->exit_status = 1;
+		return (1);
+	}
+	return (run_command_after_redirs(cmd, data, in_backup, out_backup));
 }

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   free.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asalniko <asalniko@student.42berlin.d      +#+  +:+       +#+        */
+/*   By: asalniko <asalniko@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/10/09 17:19:35 by asalniko          #+#    #+#             */
-/*   Updated: 2025/10/09 17:19:37 by asalniko         ###   ########.fr       */
+/*   Updated: 2025/11/24 21:12:13 by asalniko         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,18 +24,6 @@ void	free_pipeline(t_command *head)
 		free_command(head);
 		head = n;
 	}
-}
-
-void	ft_free_token(void *token_ptr)
-{
-	t_token	*token;
-
-	if (!token_ptr)
-		return ;
-	token = (t_token *)token_ptr;
-	free(token->value);
-	token->value = NULL;
-	free(token);
 }
 
 void	ft_free_matrix(char **matrix)
@@ -78,4 +66,19 @@ void	free_split(char **split)
 		i++;
 	}
 	free(split);
+}
+
+void	free_env_copy(char **env)
+{
+	int	i;
+
+	if (!env)
+		return ;
+	i = 0;
+	while (env[i])
+	{
+		free(env[i]);
+		i++;
+	}
+	free(env);
 }

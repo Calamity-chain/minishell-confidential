@@ -6,7 +6,7 @@
 /*   By: asalniko <asalniko@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/10/03 17:50:23 by asalniko          #+#    #+#             */
-/*   Updated: 2025/10/10 01:05:17 by asalniko         ###   ########.fr       */
+/*   Updated: 2025/11/24 21:51:05 by asalniko         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,14 +61,14 @@ char	*expand_env_variable(t_data *data, const char *env_name)
 	const char	*val;
 
 	if (!data || !env_name || env_name[0] == '\0')
-		return (NULL);
+		return (ft_strdup(""));
 	if (ft_strncmp(env_name, "$?", 3) == 0)
 		return (ft_itoa(data->exit_status));
 	if (env_name[0] == '~')
 		return (expand_tilda(data, env_name));
 	val = ft_getenv(data, env_name);
 	if (!val)
-		return (NULL);
+		return (ft_strdup(""));
 	return (ft_strdup(val));
 }
 

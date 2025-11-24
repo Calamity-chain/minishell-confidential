@@ -17,7 +17,7 @@ t_token	*ft_make_token(t_token_type type, const char *value, size_t len)
 {
 	t_token	*token;
 
-	token = (t_token *)malloc(sizeof(t_token));
+	token = malloc(sizeof(*token));
 	if (!token)
 		return (NULL);
 	token->type = type;
@@ -26,7 +26,7 @@ t_token	*ft_make_token(t_token_type type, const char *value, size_t len)
 	token->next = NULL;
 	token->prev = NULL;
 	token->quoted = Q_NONE;
-	if (value && len >= 0)
+	if (value)
 	{
 		token->value = ft_substr(value, 0, len);
 		if (!token->value)

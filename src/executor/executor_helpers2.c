@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   executor_helpers2.c                                :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asalniko <asalniko@student.42berlin.d      +#+  +:+       +#+        */
+/*   By: asalniko <asalniko@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/15 16:59:17 by asalniko          #+#    #+#             */
-/*   Updated: 2025/11/15 16:59:19 by asalniko         ###   ########.fr       */
+/*   Updated: 2025/11/24 22:36:21 by asalniko         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,7 +28,7 @@ int	execute_builtin(t_command *cmd, t_data *data)
 	if (ft_strncmp(cmd->args[0], "env", 4) == 0)
 		return (ft_env(cmd->args, data));
 	if (ft_strncmp(cmd->args[0], "exit", 5) == 0)
-		return (ft_exit(cmd->args));
+		return (ft_exit(cmd->args, data));
 	return (0);
 }
 
@@ -37,11 +37,6 @@ static void	handle_exec_checks(t_command *cmd, t_data *data,
 {
 	if (S_ISDIR(sb->st_mode))
 	{
-		if (cmd->from_env_var)
-		{
-			command_not_found_error(cmd->args[0]);
-			exit(127);
-		}
 		ft_putstr_fd("minishell: ", STDERR_FILENO);
 		ft_putstr_fd(cmd->args[0], STDERR_FILENO);
 		ft_putstr_fd(": Is a directory\n", STDERR_FILENO);
@@ -55,10 +50,7 @@ static void	handle_exec_checks(t_command *cmd, t_data *data,
 		exit(126);
 	}
 	if (execve(cmd_path, cmd->args, data->env) == -1)
-	{
-		perror(cmd->args[0]);
-		exit(126);
-	}
+		handle_execve_error(cmd->args[0]);
 }
 
 void	execute_external(t_command *cmd, t_data *data)
@@ -114,7 +106,7 @@ void	expand_command_args(t_command *cmd, t_data *data)
 	int	command_empty;
 	int	i;
 
-	if (!cmd || !cmd->args || !data || !cmd->arg_quoted)
+	if (!cmd || !cmd->args || !data)
 		return ;
 	command_empty = expand_command_name(cmd, data);
 	if (command_empty)
@@ -123,6 +115,8 @@ void	expand_command_args(t_command *cmd, t_data *data)
 		if (!cmd->args[0])
 			return ;
 	}
+	if (!cmd->arg_quoted)
+		return ;
 	i = 1;
 	while (cmd->args[i])
 	{

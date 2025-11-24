@@ -6,7 +6,7 @@
 /*   By: asalniko <asalniko@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/15 15:45:37 by ltoscani          #+#    #+#             */
-/*   Updated: 2025/11/15 19:25:27 by asalniko         ###   ########.fr       */
+/*   Updated: 2025/11/24 20:45:02 by asalniko         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,6 +45,8 @@ static void	ft_init_shell(t_data *data, char **envp)
 {
 	data->env = copy_envp(envp);
 	data->exit_status = 0;
+	data->need_newline = 0;
+	data->should_exit = 0;
 }
 
 static void	process_input(char *line, t_data *data)
@@ -77,13 +79,14 @@ static void	repl_loop(t_data *data)
 {
 	char	*line;
 
-	while (1)
+	while (!data->should_exit)
 	{
 		g_signal_received = 0;
 		line = readline(PROMPT);
 		if (!line)
 		{
 			printf("exit\n");
+			data->should_exit = 1;
 			break ;
 		}
 		if (g_signal_received == SIGINT)
@@ -107,5 +110,6 @@ int	main(int argc, char **argv, char **envp)
 	ft_init_signal_handlers();
 	repl_loop(&data);
 	ft_free_matrix(data.env);
+	data.env = NULL;
 	return (data.exit_status);
 }
