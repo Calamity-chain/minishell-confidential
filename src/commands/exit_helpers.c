@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   exit_helpers.c                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asalniko <asalniko@student.42berlin.d      +#+  +:+       +#+        */
+/*   By: asalniko <asalniko@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/24 20:48:41 by asalniko          #+#    #+#             */
-/*   Updated: 2025/11/24 20:48:43 by asalniko         ###   ########.fr       */
+/*   Updated: 2025/11/26 21:03:35 by asalniko         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -65,5 +65,7 @@ int	exit_with_code(char *arg, t_data *data)
 	u = (unsigned char)code;
 	data->exit_status = u;
 	data->should_exit = 1;
+	ft_free_matrix(data->env);
+	data->env = NULL;
 	return ((int)u);
 }

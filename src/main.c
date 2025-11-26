@@ -6,7 +6,7 @@
 /*   By: asalniko <asalniko@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/15 15:45:37 by ltoscani          #+#    #+#             */
-/*   Updated: 2025/11/24 20:45:02 by asalniko         ###   ########.fr       */
+/*   Updated: 2025/11/26 23:06:26 by asalniko         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -113,3 +113,5 @@ int	main(int argc, char **argv, char **envp)
 	data.env = NULL;
 	return (data.exit_status);
 }
+
+

@@ -6,7 +6,7 @@
 /*   By: asalniko <asalniko@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/15 16:59:17 by asalniko          #+#    #+#             */
-/*   Updated: 2025/11/24 22:36:21 by asalniko         ###   ########.fr       */
+/*   Updated: 2025/11/26 19:51:41 by asalniko         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -70,35 +70,6 @@ void	execute_external(t_command *cmd, t_data *data)
 		exit(127);
 	}
 	handle_exec_checks(cmd, data, cmd_path, &sb);
-}
-
-static void	process_arg(t_command *cmd, t_data *data, int i)
-{
-	char	*arg;
-	char	*expanded;
-
-	arg = cmd->args[i];
-	if (cmd->arg_quoted[i] != Q_SQUOTE)
-	{
-		expanded = expand_env_variable_in_string(data, arg);
-		if (expanded)
-		{
-			free(cmd->args[i]);
-			cmd->args[i] = expanded;
-			arg = expanded;
-		}
-		if (arg[0] == '~' && (arg[1] == '/' || arg[1] == '\0'))
-		{
-			expanded = expand_tilda(data, arg);
-			if (expanded)
-			{
-				free(cmd->args[i]);
-				cmd->args[i] = expanded;
-				arg = expanded;
-			}
-		}
-	}
-	cmd->args[i] = remove_outer_quotes(arg);
 }
 
 void	expand_command_args(t_command *cmd, t_data *data)

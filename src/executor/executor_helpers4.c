@@ -48,3 +48,44 @@ int	run_command_after_redirs(t_command *cmd, t_data *data,
 	data->exit_status = exit_status;
 	return (exit_status);
 }
+
+char	*expand_non_quoted_arg(t_command *cmd, t_data *data, int i)
+{
+	char	*arg;
+	char	*tmp;
+
+	arg = cmd->args[i];
+	tmp = expand_env_variable_in_string(data, arg);
+	if (tmp)
+	{
+		free(cmd->args[i]);
+		cmd->args[i] = tmp;
+		arg = tmp;
+	}
+	if (arg[0] == '~' && (arg[1] == '/' || !arg[1]))
+	{
+		tmp = expand_tilda(data, arg);
+		if (tmp)
+		{
+			free(cmd->args[i]);
+			cmd->args[i] = tmp;
+			arg = tmp;
+		}
+	}
+	return (cmd->args[i]);
+}
+
+void	process_arg(t_command *cmd, t_data *data, int i)
+{
+	char	*arg;
+	char	*clean;
+
+	arg = cmd->args[i];
+	if (cmd->arg_quoted[i] != Q_SQUOTE)
+		arg = expand_non_quoted_arg(cmd, data, i);
+	clean = remove_outer_quotes(arg);
+	if (!clean)
+		return ;
+	free(cmd->args[i]);
+	cmd->args[i] = clean;
+}

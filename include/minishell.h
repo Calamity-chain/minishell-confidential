@@ -125,6 +125,8 @@ int	run_command_after_redirs(t_command *cmd, t_data *data,
 			int in_backup, int out_backup);
 int	launch_child(t_command *cmd, t_data *data,
 				int in_backup, int out_backup);
+char	*expand_non_quoted_arg(t_command *cmd, t_data *data, int i);
+void	process_arg(t_command *cmd, t_data *data, int i);
 
 /* redirections */
 void	restore_fds(int stdin_fd, int stdout_fd);
